@@ -36,7 +36,7 @@ MotionLabs 致力于通过开源软硬件和智能化算法，帮助用户科学
 
 ## 参与贡献
 
-欢迎提交 Issue 或 Pull Request���和我们一起完善 MotionLabs！
+欢迎提交 Issue 或 Pull Request和我们一起完善 MotionLabs！
 
 ---
 
