@@ -6,31 +6,31 @@
 <title>UVC SBS 双目 · Jetson Orin NX 16GB 硬件流水线</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#0a0e1a;display:flex;justify-content:center;align-items:center;min-height:100vh;font-family:'SF Pro','Segoe UI',system-ui,sans-serif;padding:40px 20px}
-.container{max-width:1100px;width:100%}
-h1{text-align:center;color:#e0e8f0;font-size:21px;font-weight:600;letter-spacing:.5px;margin-bottom:4px}
-.tagline{text-align:center;color:#6a7a98;font-size:12px;margin-bottom:20px}
-.tag-bar{display:flex;gap:8px;justify-content:center;margin-bottom:22px;flex-wrap:wrap}
-.tag{font-size:10px;padding:3px 10px;border-radius:20px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#a8b8d0}
-.tag strong{color:#e0e8f0;font-weight:600}
-.tag-blue{font-size:10px;padding:2px 7px;border-radius:10px;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);color:#6a9ee0;margin-left:4px}
+body{background:#0a0e1a;display:flex;justify-content:center;align-items:center;min-height:100vh;font-family:'SF Pro','Segoe UI',system-ui,sans-serif;padding:30px 16px}
+.container{max-width:1200px;width:100%}
+h1{text-align:center;color:#e0e8f0;font-size:32px;font-weight:700;letter-spacing:.5px;margin-bottom:6px}
+.tagline{text-align:center;color:#6a7a98;font-size:16px;margin-bottom:24px}
+.tag-bar{display:flex;gap:12px;justify-content:center;margin-bottom:28px;flex-wrap:wrap}
+.tag{font-size:14px;padding:6px 16px;border-radius:24px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#a8b8d0}
+.tag strong{color:#e0e8f0;font-weight:700}
+.tag-blue{font-size:12px;padding:3px 10px;border-radius:12px;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);color:#6a9ee0;margin-left:6px}
 
-.pipeline{display:flex;flex-direction:column;gap:8px}
-.stage{display:flex;align-items:stretch;gap:8px}
-.sn{width:44px;min-width:44px;display:flex;flex-direction:column;justify-content:center;align-items:center;background:#111826;border-radius:8px;border:1px solid #1a2338;padding:6px 2px;gap:1px}
-.sn .num{color:#3a6acc;font-size:16px;font-weight:700;line-height:1}
-.sn .who{color:#6a7a98;font-size:9px;line-height:1.1;text-align:center}
-.card{flex:1;border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;justify-content:center;position:relative;overflow:hidden}
-.card .chip{font-size:13px;font-weight:700;margin-bottom:2px}
-.card .desc{font-size:10.5px;opacity:.85;line-height:1.4;margin-bottom:3px}
-.card .tags{display:flex;gap:6px;flex-wrap:wrap}
-.card .tags span{font-size:9px;background:rgba(0,0,0,.2);padding:1px 6px;border-radius:4px;font-weight:500}
-.ztag{position:absolute;top:6px;right:8px;font-size:9px;padding:1px 6px;border-radius:4px;font-weight:500;font-family:monospace}
+.pipeline{display:flex;flex-direction:column;gap:12px}
+.stage{display:flex;align-items:stretch;gap:12px}
+.sn{width:64px;min-width:64px;display:flex;flex-direction:column;justify-content:center;align-items:center;background:#111826;border-radius:12px;border:1px solid #1a2338;padding:10px 4px;gap:3px}
+.sn .num{color:#3a6acc;font-size:24px;font-weight:700;line-height:1}
+.sn .who{color:#6a7a98;font-size:13px;line-height:1.2;text-align:center;font-weight:500}
+.card{flex:1;border-radius:14px;padding:20px 22px;display:flex;flex-direction:column;justify-content:center;position:relative;overflow:hidden}
+.card .chip{font-size:19px;font-weight:700;margin-bottom:6px}
+.card .desc{font-size:15px;opacity:.88;line-height:1.6;margin-bottom:6px}
+.card .tags{display:flex;gap:10px;flex-wrap:wrap}
+.card .tags span{font-size:13px;background:rgba(0,0,0,.2);padding:3px 10px;border-radius:6px;font-weight:500}
+.ztag{position:absolute;top:10px;right:12px;font-size:13px;padding:3px 10px;border-radius:6px;font-weight:600;font-family:monospace}
 
-.io-box{width:68px;min-width:68px;border-radius:8px;padding:6px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:2px;font-size:9px;text-align:center;line-height:1.2;border:1px solid}
-.io-box .icon{font-size:14px}
-.io-box .label{font-weight:600}
-.io-box .sub{opacity:.6;font-size:8px}
+.io-box{width:100px;min-width:100px;border-radius:12px;padding:10px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;font-size:13px;text-align:center;line-height:1.4;border:1.5px solid}
+.io-box .icon{font-size:22px}
+.io-box .label{font-weight:700}
+.io-box .sub{opacity:.6;font-size:11px}
 
 /* Colors per hardware block */
 .c-usb{background:linear-gradient(135deg,#172038,#0d1428)}
@@ -76,19 +76,19 @@ h1{text-align:center;color:#e0e8f0;font-size:21px;font-weight:600;letter-spacing
 .io-out{background:rgba(244,114,182,.1);border-color:rgba(244,114,182,.25);color:#e898b8}
 .io-mid{background:rgba(90,204,106,.1);border-color:rgba(90,204,106,.25);color:#7ac88a}
 
-.arrow{display:flex;align-items:center;gap:5px;padding:1px 0 1px 52px;color:#2a3858;font-size:10px}
-.arrow .line{flex:1;height:1.5px;background:linear-gradient(90deg,#2a3858,#4a6890)}
-.arrow .tip{width:0;height:0;border-left:6px solid #4a6890;border-top:4px solid transparent;border-bottom:4px solid transparent}
-.arrow .note{color:#4a6890;font-size:9px;font-family:monospace}
+.arrow{display:flex;align-items:center;gap:5px;padding:1px 0 1px 76px;color:#2a3858;font-size:14px}
+.arrow .line{flex:1;height:2px;background:linear-gradient(90deg,#2a3858,#4a6890)}
+.arrow .tip{width:0;height:0;border-left:8px solid #4a6890;border-top:5px solid transparent;border-bottom:5px solid transparent}
+.arrow .note{color:#4a6890;font-size:13px;font-family:monospace;font-weight:500}
 
-.correction{background:rgba(244,67,54,.06);border:1px solid rgba(244,67,54,.15);border-radius:8px;padding:10px 14px;margin-top:20px;font-size:10.5px;color:#d88070;line-height:1.5}
+.correction{background:rgba(244,67,54,.06);border:1px solid rgba(244,67,54,.15);border-radius:10px;padding:14px 18px;margin-top:24px;font-size:15px;color:#d88070;line-height:1.7}
 .correction strong{color:#e86050}
 
 @media(max-width:720px){
-  .stage{flex-direction:column;gap:5px}
-  .sn{width:100%;min-width:unset;flex-direction:row;gap:6px;padding:4px 10px}
-  .sn .who{font-size:10px}
-  .io-box{width:100%;min-width:unset;flex-direction:row;gap:4px;padding:4px 8px}
+  .stage{flex-direction:column;gap:6px}
+  .sn{width:100%;min-width:unset;flex-direction:row;gap:8px;padding:6px 12px}
+  .sn .who{font-size:12px}
+  .io-box{width:100%;min-width:unset;flex-direction:row;gap:6px;padding:6px 10px}
   .arrow{padding-left:0}
 }
 </style>
@@ -222,20 +222,20 @@ h1{text-align:center;color:#e0e8f0;font-size:21px;font-weight:600;letter-spacing
 </div>
 
 <!-- Summary -->
-<div style="margin-top:22px;background:#111826;border:1px solid #1a2338;border-radius:10px;padding:14px 16px">
-  <div style="display:flex;flex-wrap:wrap;gap:20px;justify-content:center;align-items:center;font-size:12px">
-    <div style="display:flex;align-items:center;gap:6px"><span style="color:#4a6890;font-size:11px">总延迟</span><span style="color:#e0e8f0;font-size:17px;font-weight:700">≈ 13ms</span><span style="color:#5a7a98;font-size:10px">(75 FPS 标称)</span></div>
-    <div style="width:1px;height:20px;background:#1a2338"></div>
-    <div style="display:flex;align-items:center;gap:6px"><span style="color:#4a6890;font-size:11px">瓶颈</span><span style="color:#b878f8;font-size:12px;font-weight:600">GPU 2D 关键点</span><span style="color:#5a7a98;font-size:10px">~4ms(31%)</span></div>
-    <div style="width:1px;height:20px;background:#1a2338"></div>
-    <div style="display:flex;align-items:center;gap:6px"><span style="color:#4a6890;font-size:11px">实际 FPS</span><span style="color:#5ad85a;font-size:12px;font-weight:600">~40+ FPS</span><span style="color:#5a7a98;font-size:10px">受 I/O 和调度开销</span></div>
-    <div style="width:1px;height:20px;background:#1a2338"></div>
-    <div style="display:flex;align-items:center;gap:6px"><span style="color:#4a6890;font-size:11px">算力</span><span style="color:#4ad0d0;font-size:12px;font-weight:600">117 TOPS</span><span style="color:#5a7a98;font-size:10px">INT8</span></div>
+<div style="margin-top:24px;background:#111826;border:1px solid #1a2338;border-radius:12px;padding:18px 22px">
+  <div style="display:flex;flex-wrap:wrap;gap:28px;justify-content:center;align-items:center;font-size:16px">
+    <div style="display:flex;align-items:center;gap:10px"><span style="color:#4a6890;font-size:14px">总延迟</span><span style="color:#e0e8f0;font-size:24px;font-weight:700">≈ 13ms</span><span style="color:#5a7a98;font-size:13px">(75 FPS 标称)</span></div>
+    <div style="width:1px;height:28px;background:#1a2338"></div>
+    <div style="display:flex;align-items:center;gap:10px"><span style="color:#4a6890;font-size:14px">瓶颈</span><span style="color:#b878f8;font-size:16px;font-weight:700">GPU 2D 关键点</span><span style="color:#5a7a98;font-size:13px">~4ms(31%)</span></div>
+    <div style="width:1px;height:28px;background:#1a2338"></div>
+    <div style="display:flex;align-items:center;gap:10px"><span style="color:#4a6890;font-size:14px">实际 FPS</span><span style="color:#5ad85a;font-size:16px;font-weight:700">~40+ FPS</span><span style="color:#5a7a98;font-size:13px">受 I/O 和调度开销</span></div>
+    <div style="width:1px;height:28px;background:#1a2338"></div>
+    <div style="display:flex;align-items:center;gap:10px"><span style="color:#4a6890;font-size:14px">算力</span><span style="color:#4ad0d0;font-size:16px;font-weight:700">117 TOPS</span><span style="color:#5a7a98;font-size:13px">INT8</span></div>
   </div>
-  <div style="display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin-top:12px;padding-top:10px;border-top:1px solid #1a2338">
-    <div style="display:flex;align-items:center;gap:5px"><span style="font-size:9px;padding:2px 6px;border-radius:4px;background:rgba(90,204,106,.12);color:#5acc6a">✅ 零拷贝</span><span style="color:#5a7a98;font-size:10px">VPI 共享 buffer</span></div>
-    <div style="display:flex;align-items:center;gap:5px"><span style="font-size:9px;padding:2px 6px;border-radius:4px;background:rgba(204,106,90,.1);color:#cc6a5a">⚠ DMA 拷贝</span><span style="color:#5a7a98;font-size:10px">USB/SRAM 不可避免</span></div>
-    <div style="display:flex;align-items:center;gap:5px"><span style="font-size:9px;padding:2px 6px;border-radius:4px;background:rgba(90,160,204,.1);color:#5aa0cc">∿ VPI 编排</span><span style="color:#5a7a98;font-size:10px">跨后端 buffer 共享</span></div>
+  <div style="display:flex;flex-wrap:wrap;gap:18px;justify-content:center;margin-top:16px;padding-top:14px;border-top:1px solid #1a2338">
+    <div style="display:flex;align-items:center;gap:8px"><span style="font-size:13px;padding:4px 10px;border-radius:6px;background:rgba(90,204,106,.12);color:#5acc6a;font-weight:600">✅ 零拷贝</span><span style="color:#5a7a98;font-size:13px">VPI 共享 buffer</span></div>
+    <div style="display:flex;align-items:center;gap:8px"><span style="font-size:13px;padding:4px 10px;border-radius:6px;background:rgba(204,106,90,.1);color:#cc6a5a;font-weight:600">⚠ DMA 拷贝</span><span style="color:#5a7a98;font-size:13px">USB/SRAM 不可避免</span></div>
+    <div style="display:flex;align-items:center;gap:8px"><span style="font-size:13px;padding:4px 10px;border-radius:6px;background:rgba(90,160,204,.1);color:#5aa0cc;font-weight:600">∿ VPI 编排</span><span style="color:#5a7a98;font-size:13px">跨后端 buffer 共享</span></div>
   </div>
 </div>
 
@@ -249,7 +249,7 @@ h1{text-align:center;color:#e0e8f0;font-size:21px;font-weight:600;letter-spacing
 ⑤ 标注每级零拷贝状态：✅统一内存直读 / ⚠DMA入SRAM / ❌物理拷贝<br>
 ⑥ 引入 VPI 管线概念：VIC→DLA→GPU→PVA 间零拷贝<br>
 ⑦ 实际拷贝只有 L1 USB→内存（DMA 不可避免）<br>
-⑧ 各硬件块功能与 Jasper/Orin 官方文档对齐
+⑧ 各硬件块功能与 Jetpack/Orin 官方文档对齐
 </div>
 
 </div>
