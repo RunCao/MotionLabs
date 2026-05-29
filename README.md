@@ -7,6 +7,8 @@
 
 MotionLabs 致力于通过开源软硬件和智能化算法，帮助用户科学、规范、高效地进行动作训练，提升训练效果并降低受伤风险。
 
+> 📐 [**UVC SBS 双目硬件流水线架构图**](https://runcao.github.io/MotionLabs/uvc-sbs-architecture.html) — Jetson Orin NX 16GB 上 8 层零拷贝流水线设计
+
 
 ## 🌟 主要特性
 
