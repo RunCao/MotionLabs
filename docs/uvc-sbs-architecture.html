@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UVC SBS 双目 · Jetson Orin NX 16GB 硬件流水线</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0e1a;display:flex;justify-content:center;align-items:center;min-height:100vh;font-family:'SF Pro','Segoe UI',system-ui,sans-serif;padding:40px 20px}
+.container{max-width:1100px;width:100%}
+h1{text-align:center;color:#e0e8f0;font-size:21px;font-weight:600;letter-spacing:.5px;margin-bottom:4px}
+.tagline{text-align:center;color:#6a7a98;font-size:12px;margin-bottom:20px}
+.tag-bar{display:flex;gap:8px;justify-content:center;margin-bottom:22px;flex-wrap:wrap}
+.tag{font-size:10px;padding:3px 10px;border-radius:20px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#a8b8d0}
+.tag strong{color:#e0e8f0;font-weight:600}
+.tag-blue{font-size:10px;padding:2px 7px;border-radius:10px;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);color:#6a9ee0;margin-left:4px}
+
+.pipeline{display:flex;flex-direction:column;gap:8px}
+.stage{display:flex;align-items:stretch;gap:8px}
+.sn{width:44px;min-width:44px;display:flex;flex-direction:column;justify-content:center;align-items:center;background:#111826;border-radius:8px;border:1px solid #1a2338;padding:6px 2px;gap:1px}
+.sn .num{color:#3a6acc;font-size:16px;font-weight:700;line-height:1}
+.sn .who{color:#6a7a98;font-size:9px;line-height:1.1;text-align:center}
+.card{flex:1;border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;justify-content:center;position:relative;overflow:hidden}
+.card .chip{font-size:13px;font-weight:700;margin-bottom:2px}
+.card .desc{font-size:10.5px;opacity:.85;line-height:1.4;margin-bottom:3px}
+.card .tags{display:flex;gap:6px;flex-wrap:wrap}
+.card .tags span{font-size:9px;background:rgba(0,0,0,.2);padding:1px 6px;border-radius:4px;font-weight:500}
+.ztag{position:absolute;top:6px;right:8px;font-size:9px;padding:1px 6px;border-radius:4px;font-weight:500;font-family:monospace}
+
+.io-box{width:68px;min-width:68px;border-radius:8px;padding:6px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:2px;font-size:9px;text-align:center;line-height:1.2;border:1px solid}
+.io-box .icon{font-size:14px}
+.io-box .label{font-weight:600}
+.io-box .sub{opacity:.6;font-size:8px}
+
+/* Colors per hardware block */
+.c-usb{background:linear-gradient(135deg,#172038,#0d1428)}
+.c-usb .chip{color:#5a8ae0}
+.c-usb .desc{color:#a0b8e0}
+.c-usb .tags span{color:#b0c8f0;background:rgba(59,130,246,.12)}
+
+.c-vic{background:linear-gradient(135deg,#1a2828,#0d1a1a)}
+.c-vic .chip{color:#4ad0d0}
+.c-vic .desc{color:#a0d8d8}
+.c-vic .tags span{color:#b0e8e8;background:rgba(74,208,208,.12)}
+
+.c-dla{background:linear-gradient(135deg,#1e2d1e,#0f1f0f)}
+.c-dla .chip{color:#5ad85a}
+.c-dla .desc{color:#a0e0a0}
+.c-dla .tags span{color:#b0f0b0;background:rgba(90,216,90,.12)}
+
+.c-gpu{background:linear-gradient(135deg,#2a1e3a,#1a0f2a)}
+.c-gpu .chip{color:#b878f8}
+.c-gpu .desc{color:#d0b0f0}
+.c-gpu .tags span{color:#e0c8ff;background:rgba(184,120,248,.12)}
+
+.c-pva{background:linear-gradient(135deg,#2a2820,#1a1810)}
+.c-pva .chip{color:#f0c820}
+.c-pva .desc{color:#e8d890}
+.c-pva .tags span{color:#f0e8a0;background:rgba(240,200,32,.12)}
+
+.c-cpu{background:linear-gradient(135deg,#1e2a3a,#0e1a2a)}
+.c-cpu .chip{color:#38bdf8}
+.c-cpu .desc{color:#98d0f0}
+.c-cpu .tags span{color:#b8e0ff;background:rgba(56,189,248,.12)}
+
+.c-out{background:linear-gradient(135deg,#1e1a2a,#0e0a1a)}
+.c-out .chip{color:#f472b6}
+.c-out .desc{color:#e0a8c8}
+.c-out .tags span{color:#f0c8e0;background:rgba(244,114,182,.12)}
+
+.zcopy{color:#5acc6a;background:rgba(90,204,106,.1)}
+.zcopy-off{color:#cc6a5a;background:rgba(204,106,90,.1)}
+.zvpi{color:#5aa0cc;background:rgba(90,160,204,.1)}
+
+.io-in{background:rgba(59,130,246,.1);border-color:rgba(59,130,246,.25);color:#7aa8e8}
+.io-out{background:rgba(244,114,182,.1);border-color:rgba(244,114,182,.25);color:#e898b8}
+.io-mid{background:rgba(90,204,106,.1);border-color:rgba(90,204,106,.25);color:#7ac88a}
+
+.arrow{display:flex;align-items:center;gap:5px;padding:1px 0 1px 52px;color:#2a3858;font-size:10px}
+.arrow .line{flex:1;height:1.5px;background:linear-gradient(90deg,#2a3858,#4a6890)}
+.arrow .tip{width:0;height:0;border-left:6px solid #4a6890;border-top:4px solid transparent;border-bottom:4px solid transparent}
+.arrow .note{color:#4a6890;font-size:9px;font-family:monospace}
+
+.correction{background:rgba(244,67,54,.06);border:1px solid rgba(244,67,54,.15);border-radius:8px;padding:10px 14px;margin-top:20px;font-size:10.5px;color:#d88070;line-height:1.5}
+.correction strong{color:#e86050}
+
+@media(max-width:720px){
+  .stage{flex-direction:column;gap:5px}
+  .sn{width:100%;min-width:unset;flex-direction:row;gap:6px;padding:4px 10px}
+  .sn .who{font-size:10px}
+  .io-box{width:100%;min-width:unset;flex-direction:row;gap:4px;padding:4px 8px}
+  .arrow{padding-left:0}
+}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>UVC SBS 双目 · Jetson Orin NX 16GB</h1>
+<div class="tagline">RGB SBS → 8 层硬件流水线 · 零拷贝 VPI 管线</div>
+<div class="tag-bar">
+<span class="tag">RGB <strong>1920×1080</strong></span>
+<span class="tag"><strong>117 TOPS</strong><span class="tag-blue">NVIDIA</span></span>
+<span class="tag">GPU <strong>1.17 GHz</strong><span class="tag-blue">NVIDIA</span></span>
+<span class="tag">15~40W <strong>MAXN</strong></span>
+<span class="tag">VIC · DLA · PVA · OFA</span>
+</div>
+
+<div class="pipeline">
+
+<!-- L1: USB -->
+<div class="arrow"><div class="line"></div><div class="tip"></div><span class="note">USB 3.0 5Gbps</span></div>
+<div class="stage">
+  <div class="sn"><span class="num">L1</span><span class="who">USB</span></div>
+  <div class="card c-usb">
+    <div class="chip">🔷 USB 3.0 XHCI 控制器</div>
+    <div class="desc">DMA 接收 SBS RGB 帧 (1920×1080) 至系统内存<br>CPU 发一条 DMA 指令，硬件自动完成</div>
+    <div class="tags"><span>⚡ DMA 硬件</span><span>📦 16GB LPDDR5</span></div>
+    <span class="ztag zcopy-off">❌ 必须拷贝</span>
+  </div>
+  <div class="io-box io-mid"><span class="icon">⬜</span><span class="label">SBS RGB</span><span class="sub">1920×1080</span></div>
+</div>
+
+<!-- L2: VIC 拆帧 -->
+<div class="arrow"><div class="line"></div><div class="tip"></div><span class="note">VPI 管线 · 零拷贝</span></div>
+<div class="stage">
+  <div class="sn"><span class="num">L2</span><span class="who">VIC</span></div>
+  <div class="card c-vic">
+    <div class="chip">🔵 VIC (Video Image Compositor) — 硬件 2D 引擎</div>
+    <div class="desc">硬件裁剪 SBS → 左半 (0,0,960,1080) + 右半 (960,0,960,1080)<br>格式不变 RGB · CPU 只需发裁剪参数</div>
+    <div class="tags"><span>🖼️ 硬件裁剪</span><span>⚡ 零 CPU</span></div>
+    <span class="ztag zcopy">✅ VPI 零拷贝</span>
+  </div>
+  <div class="io-box io-mid"><span class="icon">⇄</span><span class="label">L / R 分离</span><span class="sub">960×1080 ×2</span></div>
+</div>
+
+<!-- L3: VIC 缩放→DLA -->
+<div class="arrow"><div class="line"></div><div class="tip"></div><span class="note">VPI 零拷贝</span></div>
+<div class="stage">
+  <div class="sn"><span class="num">L3</span><span class="who">VIC→DLA</span></div>
+  <div class="card c-vic">
+    <div class="chip">🔵 VIC — 硬件缩放引擎 (双线性)</div>
+    <div class="desc">将左图 (960×1080) 缩放至 DLA 模型输入尺寸 640×640<br>硬件插值 · VPI 直接将 buffer handle 传给 DLA</div>
+    <div class="tags"><span>📐 硬件缩放</span><span>↻ 双线性</span></div>
+    <span class="ztag zcopy">✅ VPI 零拷贝</span>
+  </div>
+  <div class="io-box io-in"><span class="icon">🔽</span><span class="label">Resized</span><span class="sub">640×640</span></div>
+</div>
+
+<!-- L4: DLA -->
+<div class="arrow"><div class="line"></div><div class="tip"></div><span class="note">DLA DMA → SRAM</span></div>
+<div class="stage">
+  <div class="sn"><span class="num">L4</span><span class="who">DLA</span></div>
+  <div class="card c-dla">
+    <div class="chip">🔮 DLA (NVDLA v2) × 2 引擎</div>
+    <div class="desc">运行 YOLOv26 CNN 骨架 → 直接输出人体边界框<br>无需 NMS · 输出即为终检结果 · 支持 INT8</div>
+    <div class="tags"><span>▶ YOLOv26</span><span>📦 INT8</span><span>🔢 双核并行</span><span>⚡ ~2ms</span></div>
+    <span class="ztag zcopy-off">⚠ DMA→SRAM</span>
+  </div>
+  <div class="io-box io-out"><span class="icon">🎯</span><span class="label">BBox</span><span class="sub">x,y,w,h</span></div>
+</div>
+
+<!-- L5: VIC Crop ROI -->
+<div class="arrow"><div class="line"></div><div class="tip"></div><span class="note">VPI 零拷贝</span></div>
+<div class="stage">
+  <div class="sn"><span class="num">L5</span><span class="who">VIC</span></div>
+  <div class="card c-vic">
+    <div class="chip">🔵 VIC — 硬件 ROI 裁剪</div>
+    <div class="desc">根据 DLA 输出的 BBox 坐标 → 裁剪 L/R ROI 至 256×256<br>直接从统一内存读取原图 · 零 CPU 参与</div>
+    <div class="tags"><span>✂️ 硬件裁剪</span><span>⬜ 256×256</span><span>⚡ 零 CPU</span></div>
+    <span class="ztag zcopy">✅ VPI 零拷贝</span>
+  </div>
+  <div class="io-box io-mid"><span class="icon">⬜</span><span class="label">L/R ROI</span><span class="sub">256×256 ×2</span></div>
+</div>
+
+<!-- L6: GPU -->
+<div class="arrow"><div class="line"></div><div class="tip"></div><span class="note">VPI 零拷贝 · 统一内存直读</span></div>
+<div class="stage">
+  <div class="sn"><span class="num">L6</span><span class="who">GPU</span></div>
+  <div class="card c-gpu">
+    <div class="chip">🟢 GPU (Ampere 1024 CUDA + 32 Tensor Core @1.17GHz)</div>
+    <div class="desc">对 L/R ROI 并行运行 2D 姿态估计网络 (HRNet / SimCC / Lite-HRNet)<br>TensorRT FP16/INT8 优化 · 双流共用单颗 GPU</div>
+    <div class="tags"><span>🦴 17 kps ×2</span><span>⚡ ~4ms</span><span>💾 统一内存直读</span><span>🔀 双流并行</span></div>
+    <span class="ztag zcopy">✅ 统一内存直读</span>
+  </div>
+  <div class="io-box io-out"><span class="icon">⬤</span><span class="label">2D Kps</span><span class="sub">L(17)+R(17)</span></div>
+</div>
+
+<!-- L7: PVA -->
+<div class="arrow"><div class="line"></div><div class="tip"></div><span class="note">VPI 零拷贝</span></div>
+<div class="stage">
+  <div class="sn"><span class="num">L7</span><span class="who">PVA</span></div>
+  <div class="card c-pva">
+    <div class="chip">⚡ PVA v2 (可编程视觉加速器)</div>
+    <div class="desc">对已校正 L/R 全图做 SGM 立体匹配 → 输出视差图<br>PVA 专为 SGM 设计 · 与 GPU 可并行运行</div>
+    <div class="tags"><span>🔭 SGM 匹配</span><span>⚡ ~3ms</span><span>📐 亚像素精度</span></div>
+    <span class="ztag zcopy-off">⚠ DMA→内部存储</span>
+  </div>
+  <div class="io-box io-out"><span class="icon">📊</span><span class="label">视差图</span><span class="sub">disparity</span></div>
+</div>
+
+<!-- L8: CPU+GPU -->
+<div class="arrow"><div class="line"></div><div class="tip"></div><span class="note">统一内存直读</span></div>
+<div class="stage">
+  <div class="sn"><span class="num">L8</span><span class="who">融合</span></div>
+  <div class="card c-cpu">
+    <div class="chip">🟡 CPU (8核 A78AE) + 🟢 GPU (Tensor Core)</div>
+    <div class="desc">CPU: 三角测量 视差→深度Z + Kalman 时间滤波 + 归一化<br>GPU: SMPL 人体模型拟合 (Tensor Core 加速)</div>
+    <div class="tags"><span>🔗 三角测量</span><span>🧠 Kalman</span><span>📤 SMPL (GPU~3ms)</span></div>
+    <span class="ztag zcopy">✅ 统一内存直读</span>
+  </div>
+  <div class="io-box io-out"><span class="icon">🦴</span><span class="label">3D 姿态</span><span class="sub">JSON/PB</span></div>
+</div>
+
+<div class="arrow"><div class="line"></div><div class="tip"></div><span class="note">输出</span></div>
+<div class="stage">
+  <div class="sn"><span class="num">L9</span><span class="who">输出</span></div>
+  <div class="card c-out">
+    <div class="chip">🎯 应用层</div>
+    <div class="desc">17 关节点 (X,Y,Z,conf) + Mesh / 骨骼叠加 / 记录<br>USB / ETH 输出 · JSON / ProtoBuf</div>
+    <div class="tags"><span>📡 40+ FPS</span><span>⏱ ~13ms</span><span>🔌 USB/ETH</span></div>
+  </div>
+</div>
+
+<!-- Summary -->
+<div style="margin-top:22px;background:#111826;border:1px solid #1a2338;border-radius:10px;padding:14px 16px">
+  <div style="display:flex;flex-wrap:wrap;gap:20px;justify-content:center;align-items:center;font-size:12px">
+    <div style="display:flex;align-items:center;gap:6px"><span style="color:#4a6890;font-size:11px">总延迟</span><span style="color:#e0e8f0;font-size:17px;font-weight:700">≈ 13ms</span><span style="color:#5a7a98;font-size:10px">(75 FPS 标称)</span></div>
+    <div style="width:1px;height:20px;background:#1a2338"></div>
+    <div style="display:flex;align-items:center;gap:6px"><span style="color:#4a6890;font-size:11px">瓶颈</span><span style="color:#b878f8;font-size:12px;font-weight:600">GPU 2D 关键点</span><span style="color:#5a7a98;font-size:10px">~4ms(31%)</span></div>
+    <div style="width:1px;height:20px;background:#1a2338"></div>
+    <div style="display:flex;align-items:center;gap:6px"><span style="color:#4a6890;font-size:11px">实际 FPS</span><span style="color:#5ad85a;font-size:12px;font-weight:600">~40+ FPS</span><span style="color:#5a7a98;font-size:10px">受 I/O 和调度开销</span></div>
+    <div style="width:1px;height:20px;background:#1a2338"></div>
+    <div style="display:flex;align-items:center;gap:6px"><span style="color:#4a6890;font-size:11px">算力</span><span style="color:#4ad0d0;font-size:12px;font-weight:600">117 TOPS</span><span style="color:#5a7a98;font-size:10px">INT8</span></div>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin-top:12px;padding-top:10px;border-top:1px solid #1a2338">
+    <div style="display:flex;align-items:center;gap:5px"><span style="font-size:9px;padding:2px 6px;border-radius:4px;background:rgba(90,204,106,.12);color:#5acc6a">✅ 零拷贝</span><span style="color:#5a7a98;font-size:10px">VPI 共享 buffer</span></div>
+    <div style="display:flex;align-items:center;gap:5px"><span style="font-size:9px;padding:2px 6px;border-radius:4px;background:rgba(204,106,90,.1);color:#cc6a5a">⚠ DMA 拷贝</span><span style="color:#5a7a98;font-size:10px">USB/SRAM 不可避免</span></div>
+    <div style="display:flex;align-items:center;gap:5px"><span style="font-size:9px;padding:2px 6px;border-radius:4px;background:rgba(90,160,204,.1);color:#5aa0cc">∿ VPI 编排</span><span style="color:#5a7a98;font-size:10px">跨后端 buffer 共享</span></div>
+  </div>
+</div>
+
+<!-- Correction notes -->
+<div class="correction">
+<strong>✎ 本次修正（基于用户反馈）</strong><br>
+① 输入 RGB 直出 → 去除 YUYV→RGB 格式转换环节<br>
+② VIC 替代 CPU 做 SBS 拆帧（硬件裁剪引擎，零CPU）<br>
+③ VIC 替代 CPU 做缩放 + ROI 裁剪（硬件引擎，零CPU）<br>
+④ YOLOv26 去 NMS → DLA 输出即为终检结果，去除 CPU 后处理<br>
+⑤ 标注每级零拷贝状态：✅统一内存直读 / ⚠DMA入SRAM / ❌物理拷贝<br>
+⑥ 引入 VPI 管线概念：VIC→DLA→GPU→PVA 间零拷贝<br>
+⑦ 实际拷贝只有 L1 USB→内存（DMA 不可避免）<br>
+⑧ 各硬件块功能与 Jasper/Orin 官方文档对齐
+</div>
+
+</div>
+</div>
+</body>
+</html>
