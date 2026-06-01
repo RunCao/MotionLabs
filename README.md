@@ -15,6 +15,7 @@ MotionLabs 致力于通过开源软硬件和智能化算法，帮助用户科学
 3. 🎯 精准后处理算法（双向滤波、反向 IK、OpenSim 格式转化）
 4. 🏋️ 动作学习与控制 / 运动表现分析下的训练辅助框架
 5. 📊 基于数据可视化理论的直观反馈设计
+6. 📐 [**UVC SBS 双目硬件流水线架构图**](https://runcao.github.io/MotionLabs/uvc-sbs-architecture.html) — Jetson Orin NX 16GB 8 层零拷贝流水线设计
 
 
 ## 🗺️ 阶段规划
@@ -38,7 +39,3 @@ MotionLabs 致力于通过开源软硬件和智能化算法，帮助用户科学
 ## 🪪 License
 
 MIT © RunCao
-
----
-
-> 📐 [**UVC SBS 双目硬件流水线架构图**](https://runcao.github.io/MotionLabs/uvc-sbs-architecture.html) — Jetson Orin NX 16GB 8 层零拷贝流水线设计
