@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>VPI · 芯片 · DDR · 数据转移</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#c9d1d9;display:flex;justify-content:center;padding:28px 12px 60px;font-family:'SF Pro Display',-apple-system,'PingFang SC','Microsoft YaHei',sans-serif}
+#w{width:1060px;max-width:100%}
+h1{font-size:20px;font-weight:800;color:#d2a8ff;text-align:center;margin-bottom:4px}
+h2{font-size:11px;color:#8b949e;font-weight:400;text-align:center;margin-bottom:28px}
+
+/* Main canvas area */
+.canvas{border-radius:16px;border:1px solid #30363d;background:linear-gradient(180deg,rgba(13,17,35,.95),rgba(22,27,34,.8));padding:28px 24px;margin:12px 0;position:relative;overflow:hidden}
+
+/* DDR */
+.ddr-block{border:2px solid rgba(88,166,255,.35);border-radius:14px;padding:20px 24px 16px;background:rgba(88,166,255,.04);margin:0 auto 20px;max-width:700px;text-align:center}
+.ddr-block .dl{display:inline-block;background:#0d1117;color:#79c0ff;font-size:10px;font-weight:700;padding:3px 14px;border-radius:5px;border:1px solid rgba(88,166,255,.3);margin-bottom:10px}
+.ddr-block .regions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.ddr-block .reg{border-radius:8px;padding:10px 14px;text-align:center;font-size:9px;border:1px solid;line-height:1.5}
+.ddr-block .reg.nv12{border-color:rgba(255,152,0,.3);background:rgba(255,152,0,.06);color:#ffa657;min-width:140px}
+.ddr-block .reg.disp{border-color:rgba(171,71,188,.2);background:rgba(171,71,188,.05);color:#ce93d8;min-width:120px}
+.ddr-block .reg.kp{border-color:rgba(76,175,80,.2);background:rgba(76,175,80,.05);color:#81c784;min-width:120px}
+
+/* Chip layer */
+.chip-layer{display:flex;justify-content:center;gap:0;margin:16px 0;flex-wrap:wrap;align-items:flex-start}
+.chip{border-radius:10px;padding:12px 14px;min-width:120px;text-align:center;border:1.5px solid;position:relative}
+.chip .icon{font-size:18px;margin-bottom:2px}
+.chip .nm{font-size:10px;font-weight:700}
+.chip .who{font-size:7px;padding:1px 6px;border-radius:3px;display:inline-block;margin-top:3px}
+.chip .who.vpi-managed{background:rgba(188,140,255,.15);color:#d2a8ff}
+.chip .who.trt-managed{background:rgba(255,152,0,.15);color:#ffa657}
+
+.chip.vic{border-color:#2196F3;background:rgba(21,101,192,.08)}.chip.vic .nm{color:#64b5f6}
+.chip.ofa{border-color:#fdd835;background:rgba(253,216,53,.06)}.chip.ofa .nm{color:#fdd835}
+.chip.pva{border-color:#ab47bc;background:rgba(123,31,162,.08)}.chip.pva .nm{color:#ce93d8}
+.chip.dla{border-color:#ff9800;background:rgba(230,81,0,.08)}.chip.dla .nm{color:#ffa726}
+.chip.gpu{border-color:#4caf50;background:rgba(27,94,32,.08)}.chip.gpu .nm{color:#81c784}
+.chip.cpu{border-color:#38bdf8;background:rgba(14,165,233,.06)}.chip.cpu .nm{color:#7dd3fc}
+
+/* VPI orchestrator */
+.vpi-orch{border:2px dashed rgba(188,140,255,.3);border-radius:12px;padding:14px 20px;margin:16px auto;max-width:700px;text-align:center;background:rgba(188,140,255,.03)}
+.vpi-orch .vpi-tag{display:inline-block;background:#8b5cf6;color:#fff;font-size:9px;font-weight:700;padding:2px 12px;border-radius:4px;margin-bottom:8px}
+.vpi-orch .vpi-desc{font-size:9px;color:#9b8ec4;line-height:1.6}
+
+/* Arrows */
+.arrow-set{display:flex;justify-content:center;align-items:center;gap:0;margin:8px 0;flex-wrap:wrap}
+.arr{display:flex;flex-direction:column;align-items:center;font-size:7px;color:#484f58;padding:0 2px}
+.arr .arr-sym{font-size:14px}
+.arr .arr-label{color:#7ee787;font-size:6px}
+.arr .arr-label.red{color:#ff7b72}
+
+/* TensorRT zone */
+.trt-zone{border:1px dashed rgba(255,152,0,.2);border-radius:12px;padding:12px 16px;margin:12px 0;position:relative}
+.trt-zone .trt-tag{position:absolute;top:-8px;left:50%;transform:translateX(-50%);background:rgba(255,152,0,.15);color:#ffa657;font-size:7px;font-weight:700;padding:2px 10px;border-radius:4px}
+
+/* VPI zone */
+.vpi-zone{border:1px dashed rgba(188,140,255,.2);border-radius:12px;padding:12px 16px;margin:12px 0;position:relative}
+.vpi-zone .vpi-ztag{position:absolute;top:-8px;left:50%;transform:translateX(-50%);background:rgba(188,140,255,.15);color:#d2a8ff;font-size:7px;font-weight:700;padding:2px 10px;border-radius:4px}
+
+/* Legend */
+.legend{display:flex;gap:16px;justify-content:center;font-size:8px;color:#8b949e;margin-top:16px;flex-wrap:wrap}
+.legend .item{display:flex;align-items:center;gap:4px}
+.legend .dot{width:8px;height:8px;border-radius:2px}
+.legend .dot.vpi-dot{background:#d2a8ff}.legend .dot.trt-dot{background:#ffa657}.legend .dot.ddr-dot{background:#79c0ff}
+
+@media(max-width:768px){.chip-layer{gap:8px}.ddr-block .regions{flex-direction:column;align-items:center}}
+</style>
+</head>
+<body>
+<div id="w">
+
+<h1>VPI · 芯片 · DDR · 数据转移</h1>
+<h2>仅含官网可验证的关系 · 虚线框标注管理边界</h2>
+
+<div class="canvas">
+
+  <!-- ═══ DDR — 所有数据的唯一存放地 ═══ -->
+  <div class="ddr-block">
+    <div class="dl">DDR 系统内存 — 共享数据池</div>
+    <div class="regions">
+      <div class="reg nv12">
+        <b>NV12 环形缓冲区</b><br>
+        4 槽 × 1.35MB<br>
+        <span style="font-size:7px;opacity:.6">GStreamer 分配 · VIC 写入</span>
+      </div>
+      <div class="reg disp">
+        <b>视差图 + 置信度</b><br>
+        S16+U16 · ~3.5MB<br>
+        <span style="font-size:7px;opacity:.6">PVA 输出</span>
+      </div>
+      <div class="reg kp">
+        <b>关键点数据</b><br>
+        BBox + 2D + 3D<br>
+        <span style="font-size:7px;opacity:.6">DLA/GPU 输出</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ VPI ORCHESTRATOR ═══ -->
+  <div class="vpi-orch">
+    <div class="vpi-tag">VPI 软件层 · thin abstraction</div>
+    <div class="vpi-desc">
+      vpiImageCreateWrapper 包装 DDR 地址 → 不拷贝 · 不持有 · 不释放<br>
+      Stream 提交算法到后端 → 异步执行 → Event 同步
+    </div>
+  </div>
+
+  <!-- ═══ CHIPS ═══ -->
+  <div class="chip-layer">
+
+    <!-- VPI-managed chips -->
+    <div style="display:flex;flex-direction:column;align-items:center;gap:0">
+      <div class="vpi-zone" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+        <div class="vpi-ztag">VPI 后端管理</div>
+        <div class="chip vic">
+          <div class="icon">📷</div><div class="nm">VIC</div>
+          <div class="who vpi-managed">VPI 后端</div>
+          <div style="font-size:7px;color:#8b949e;margin-top:4px">格式转换<br>矫正写入 DDR</div>
+        </div>
+        <div class="chip ofa">
+          <div class="icon">🔍</div><div class="nm">OFA</div>
+          <div class="who vpi-managed">VPI 后端</div>
+          <div style="font-size:7px;color:#8b949e;margin-top:4px">代价计算<br>SGM 步骤2</div>
+        </div>
+        <div class="chip pva">
+          <div class="icon">⚡</div><div class="nm">PVA</div>
+          <div class="who vpi-managed">VPI 后端</div>
+          <div style="font-size:7px;color:#8b949e;margin-top:4px">SGM 核心<br>Census/DP/WTA</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;padding:0 6px;color:#484f58;font-size:10px;flex-shrink:0">+</div>
+
+    <!-- TensorRT-managed chips -->
+    <div style="display:flex;flex-direction:column;align-items:center;gap:0">
+      <div class="trt-zone" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+        <div class="trt-tag">TensorRT 管理</div>
+        <div class="chip dla">
+          <div class="icon">🧠</div><div class="nm">DLA×2</div>
+          <div class="who trt-managed">TensorRT DLA EP</div>
+          <div style="font-size:7px;color:#8b949e;margin-top:4px">YOLO 检测<br>DDR↔SRAM</div>
+        </div>
+        <div class="chip gpu">
+          <div class="icon">🎮</div><div class="nm">GPU</div>
+          <div class="who trt-managed">TensorRT GPU EP</div>
+          <div style="font-size:7px;color:#8b949e;margin-top:4px">ViTPose++<br>DDR↔VRAM</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;padding:0 6px;color:#484f58;font-size:10px;flex-shrink:0">+</div>
+
+    <!-- CPU -->
+    <div class="chip cpu">
+      <div class="icon">💻</div><div class="nm">CPU ARM</div>
+      <div class="who" style="background:rgba(56,189,248,.12);color:#7dd3fc">应用线程</div>
+      <div style="font-size:7px;color:#8b949e;margin-top:4px">查表三角化<br>读写 DDR</div>
+    </div>
+  </div>
+
+  <!-- ═══ DATA FLOW ARROWS ═══ -->
+  <div style="display:flex;justify-content:center;gap:0;margin:12px 0;flex-wrap:wrap;align-items:flex-start">
+
+    <!-- VPI path -->
+    <div style="border:1px solid #21262d;border-radius:10px;padding:10px 14px;text-align:center;min-width:280px">
+      <div style="font-size:9px;font-weight:700;color:#d2a8ff;margin-bottom:8px">VPI 数据路径</div>
+      <div style="font-size:9px;color:#8b949e;line-height:2">
+        DDR NV12<br>
+        <span style="color:#7ee787">↓ vpiImageCreateWrapper (不拷贝)</span><br>
+        VPI Stream<br>
+        <span style="color:#7ee787">↓ submit to VIC|OFA|PVA</span><br>
+        硬件执行 → 结果写回 DDR<br>
+        <span style="color:#7ee787">↓ vpiStreamSync</span><br>
+        CPU 读 DDR 结果
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;padding:0 8px;color:#484f58;font-size:10px">∥</div>
+
+    <!-- TensorRT path -->
+    <div style="border:1px solid #21262d;border-radius:10px;padding:10px 14px;text-align:center;min-width:280px">
+      <div style="font-size:9px;font-weight:700;color:#ffa657;margin-bottom:8px">TensorRT 数据路径</div>
+      <div style="font-size:9px;color:#8b949e;line-height:2">
+        DDR NV12<br>
+        <span style="color:#ffa657">↓ TensorRT 加载到 DLA SRAM</span><br>
+        DLA YOLO 推理<br>
+        <span style="color:#ffa657">↓ BBox 写回 DDR</span><br>
+        TensorRT 加载 crop 到 GPU VRAM<br>
+        <span style="color:#ffa657">↓ ViTPose++ 推理</span><br>
+        2D 关键点写回 DDR
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══ LEGEND ═══ -->
+  <div class="legend">
+    <div class="item"><div class="dot ddr-dot"></div>DDR 共享内存</div>
+    <div class="item"><div class="dot vpi-dot"></div>VPI 管理</div>
+    <div class="item"><div class="dot trt-dot"></div>TensorRT 管理</div>
+    <div class="item"><span style="color:#7ee787">↓</span> 数据引用(不拷贝)</div>
+  </div>
+
+</div>
+
+<!-- ═══ BOTTOM SUMMARY ═══ -->
+<div style="border-radius:12px;padding:16px 20px;margin:12px 0;border:1px solid #30363d;background:#161b22;text-align:center">
+  <div style="font-size:10px;color:#8b949e;line-height:2">
+    <b>DDR 是唯一的数据存放地</b> — 所有数据都在这里，没有第二份 DDR 拷贝<br>
+    <b>VPI 管 VIC/OFA/PVA</b> — 通过 wrapper 引用 DDR 地址，提交算法，不拷贝数据<br>
+    <b>TensorRT 管 DLA/GPU</b> — 独立加载数据到芯片内部存储，VPI 不参与<br>
+    <b>CPU 读写 DDR 结果</b> — 三角化、滤波、输出
+  </div>
+</div>
+
+<div style="text-align:center;margin-top:24px;font-size:10px;color:#30363d">
+  仅含官网可验证内容 · docs.nvidia.com/vpi/4.0/architecture.html
+</div>
+
+</div>
+</body>
+</html>
