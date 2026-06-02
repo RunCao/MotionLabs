@@ -15,7 +15,6 @@ MotionLabs 致力于通过开源软硬件和智能化算法，帮助用户科学
 3. 🎯 精准后处理算法（双向滤波、反向 IK、OpenSim 格式转化）
 4. 🏋️ 动作学习与控制 / 运动表现分析下的训练辅助框架
 5. 📊 基于数据可视化理论的直观反馈设计
-6. 📐 [**UVC SBS 双目硬件流水线架构图**](https://runcao.github.io/MotionLabs/uvc-sbs-architecture.html) — Jetson Orin NX 16GB 8 层零拷贝流水线设计
 
 
 ## 🗺️ 阶段规划
@@ -36,12 +35,14 @@ MotionLabs 致力于通过开源软硬件和智能化算法，帮助用户科学
 欢迎提交 Issue 或 Pull Request，和我们一起完善 MotionLabs！
 
 
+## 🔗 架构图链接
+
+> 📐 [**UVC SBS 双目硬件流水线架构图**](https://runcao.github.io/MotionLabs/uvc-sbs-architecture.html) — Jetson Orin NX 16GB 8 层零拷贝流水线设计
+> 📐 [**PVA-SGM 立体匹配流程**](https://runcao.github.io/MotionLabs/pva-sgm-detail.html) — 双目立体匹配完整流程可视化
+> 📐 [**VPI DataPath 流水线**](https://runcao.github.io/MotionLabs/vpi-datapath.html) — VPI 数据通路架构图
+> 📐 [**motionlabs-ddd**](https://runcao.github.io/MotionLabs/motionlabs-ddd.html) — DDD 设计可视化
+
+
 ## 🪪 License
 
 MIT © RunCao
-
----
-
-> 📐 [**PVA-SGM 立体匹配流程**](https://runcao.github.io/MotionLabs/pva-sgm-detail.html) — 双目立体匹配完整流程可视化
-> 📐 [**motionlabs-ddd**](https://runcao.github.io/MotionLabs/motionlabs-ddd.html) — DDD 设计可视化
-> 📐 [**VPI DataPath 流水线**](https://runcao.github.io/MotionLabs/vpi-datapath.html) — VPI 数据通路架构图
