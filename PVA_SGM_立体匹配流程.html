@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>PVA v2 SGM 立体匹配流程</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  background:#0D1117;
+  display:flex;align-items:center;justify-content:center;
+  min-height:100vh;font-family:'SF Pro Display',-apple-system,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;
+  overflow-x:hidden;padding:20px;
+}
+#canvas{
+  position:relative;
+  width:1200px;min-height:1600px;
+  background:radial-gradient(ellipse at 50% 0%, #141B2D 0%, #0D1117 70%);
+  border-radius:20px;
+  padding:0 40px 40px;
+  flex-shrink:0;
+}
+canvas.bg{
+  position:absolute;top:0;left:0;width:100%;height:100%;
+  pointer-events:none;border-radius:20px;
+  z-index:0;
+}
+
+/* ===== Title ===== */
+.title{text-align:center;padding:48px 0 8px;position:relative;z-index:1}
+.title h1{
+  font-size:38px;font-weight:800;color:#FFFFFF;
+  background:linear-gradient(135deg,#E1BEE7,#CE93D8,#B39DDB);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+  letter-spacing:1px;
+}
+.title .sub{
+  font-size:18px;color:#78909C;margin-top:6px;
+}
+.title .sub span{color:#4FC3F7;font-weight:600}
+
+/* ===== Layer labels ===== */
+.layer-label{
+  position:relative;z-index:1;
+  font-size:14px;font-weight:700;color:#546E7A;text-transform:uppercase;
+  letter-spacing:3px;margin:30px 0 12px 10px;
+}
+.layer-label::before{content:'';position:absolute;left:-10px;top:50%;width:4px;height:4px;border-radius:50%;background:#546E7A;transform:translateY(-50%)}
+
+/* ===== Input Row ===== */
+.input-row{display:flex;gap:24px;justify-content:center;position:relative;z-index:1}
+.input-box{
+  flex:1;max-width:420px;
+  background:linear-gradient(135deg,#1E3A5F,#0D2137);
+  border:1px solid #4FC3F7;border-radius:14px;
+  padding:20px 24px;
+  box-shadow:0 0 20px rgba(79,195,247,0.15),inset 0 1px 0 rgba(79,195,247,0.1);
+  position:relative;
+}
+.input-box .label{
+  font-size:15px;font-weight:700;color:#E0E0E0;margin-bottom:8px;
+}
+.input-box .label span{color:#4FC3F7;font-weight:400;font-size:12px;margin-left:8px}
+.input-box .spec{
+  display:flex;gap:12px;flex-wrap:wrap;
+}
+.input-box .spec .tag{
+  font-size:12px;color:#90A4AE;padding:3px 10px;
+  border-radius:6px;background:rgba(79,195,247,0.08);
+  border:1px solid rgba(79,195,247,0.2);
+}
+.input-box .bottom-note{
+  font-size:11px;color:#546E7A;margin-top:10px;
+  border-top:1px solid rgba(79,195,247,0.15);padding-top:8px;
+}
+.input-arrow-left{position:relative;z-index:1;text-align:center;font-size:24px;color:#4FC3F7;padding:8px 0;letter-spacing:6px}
+.input-arrow-left::before{content:'▲来自 VIC Remap 硬件矫正 · 极线对齐';display:block;font-size:11px;color:#546E7A;letter-spacing:0;margin-bottom:2px}
+
+/* ===== Zero-Copy sidebar ===== */
+.zero-copy{
+  position:absolute;left:-20px;top:380px;z-index:2;
+  width:180px;
+  background:linear-gradient(180deg,#004D40,#00332B);
+  border:1px solid #26A69A;border-radius:12px;
+  padding:14px 16px;
+  box-shadow:0 0 16px rgba(38,166,154,0.15);
+}
+.zero-copy .title-tag{
+  font-size:12px;font-weight:700;color:#80CBC4;margin-bottom:10px;
+  display:flex;align-items:center;gap:6px;
+}
+.zero-copy .flow-line{position:relative;padding:0 0 0 18px;margin:4px 0}
+.zero-copy .flow-line::before{
+  content:'';position:absolute;left:4px;top:4px;bottom:4px;width:2px;
+  background:linear-gradient(to bottom,#26A69A,#00695C);
+}
+.zero-copy .flow-line .node{
+  font-size:11px;color:#B2DFDB;padding:4px 0;position:relative;
+}
+.zero-copy .flow-line .node::before{
+  content:'';position:absolute;left:-16px;top:50%;width:8px;height:8px;
+  border-radius:50%;background:#26A69A;transform:translateY(-50%);
+}
+.zero-copy .check{
+  font-size:10px;color:#4DB6AC;margin-top:8px;padding-top:8px;
+  border-top:1px solid rgba(38,166,154,0.2);
+}
+.zero-copy .check span{display:block;padding:2px 0}
+
+/* ===== PVA Big Box ===== */
+.pva-box{
+  position:relative;z-index:1;
+  background:linear-gradient(135deg,#1A0033,#0D001A);
+  border:1.5px solid #CE93D8;border-radius:16px;
+  padding:20px 20px 16px;
+  margin:8px 0 0;
+  box-shadow:0 0 30px rgba(206,147,216,0.12),inset 0 0 60px rgba(206,147,216,0.03);
+}
+.pva-box .pva-title{
+  font-size:16px;font-weight:700;color:#E1BEE7;margin-bottom:16px;
+  display:flex;align-items:center;gap:8px;
+}
+.pva-box .pva-title span{font-size:12px;font-weight:400;color:#9E9E9E;margin-left:auto}
+
+/* ===== Pipeline steps ===== */
+.pipeline{
+  display:flex;gap:8px;align-items:stretch;
+}
+.step{
+  flex:1;min-width:0;
+  background:linear-gradient(180deg,#2A0053,#1A0033);
+  border:1px solid #9C27B0;border-radius:10px;
+  padding:10px 8px;text-align:center;
+  position:relative;transition:border-color .3s;
+  cursor:default;
+}
+.step:hover{border-color:#CE93D8;box-shadow:0 0 16px rgba(206,147,216,0.2)}
+.step .step-num{
+  font-size:9px;color:#7B1FA2;font-weight:700;margin-bottom:3px;
+}
+.step .step-name{
+  font-size:10px;font-weight:700;color:#FFFFFF;line-height:1.2;margin-bottom:3px;
+}
+.step .step-desc{
+  font-size:8px;color:#B39DDB;line-height:1.3;
+}
+.step .step-formula{
+  font-size:7px;color:#7E57C2;line-height:1.2;margin-top:3px;
+  font-family:monospace;
+}
+.step-arrow{
+  font-size:16px;color:#CE93D8;display:flex;align-items:center;
+  flex-shrink:0;padding:0 2px;
+  opacity:0.6;
+}
+.step.highlight{
+  border-color:#E040FB;background:linear-gradient(180deg,#3A0063,#2A0053);
+  box-shadow:0 0 20px rgba(224,64,251,0.25);
+  animation:pulse-glow 2s ease-in-out infinite;
+}
+.step.highlight .step-name{color:#E040FB}
+@keyframes pulse-glow{
+  0%,100%{box-shadow:0 0 12px rgba(224,64,251,0.2)}
+  50%{box-shadow:0 0 28px rgba(224,64,251,0.4)}
+}
+.step.sub-highlight{
+  border-color:#FFD54F;
+  background:linear-gradient(180deg,#3A2600,#2A1A00);
+}
+.step.sub-highlight .step-name{color:#FFD54F}
+.step.sub-highlight .step-desc{color:#FFE082}
+
+/* ===== Median filter ===== */
+.median-bar{
+  margin-top:12px;
+  background:linear-gradient(90deg,rgba(154,208,194,0.06),rgba(154,208,194,0.12),rgba(154,208,194,0.06));
+  border:1px solid #4DB6AC;border-radius:8px;
+  padding:8px 16px;text-align:center;
+}
+.median-bar .m-title{
+  font-size:12px;font-weight:600;color:#80CBC4;
+}
+.median-bar .m-desc{font-size:10px;color:#4DB6AC}
+
+/* ===== Performance Card ===== */
+.perf-card{
+  position:absolute;right:30px;top:960px;z-index:2;
+  width:220px;
+  background:linear-gradient(180deg,#1A237E,#0D1442);
+  border:1px solid #448AFF;border-radius:12px;
+  padding:14px 16px;
+  box-shadow:0 0 20px rgba(68,138,255,0.12);
+}
+.perf-card .perf-title{
+  font-size:13px;font-weight:700;color:#BBDEFB;margin-bottom:10px;
+  text-align:center;
+}
+.perf-card table{width:100%;border-collapse:collapse}
+.perf-card td{
+  font-size:10px;padding:4px 6px;color:#90CAF9;
+  border-bottom:1px solid rgba(68,138,255,0.1);
+}
+.perf-card td:last-child{text-align:right;color:#BBDEFB;font-weight:600}
+.perf-card tr:last-child td{border-bottom:none}
+
+/* ===== Output Row ===== */
+.output-row{display:flex;gap:24px;justify-content:center;position:relative;z-index:1;margin-top:12px}
+.output-box{
+  flex:1;max-width:420px;
+  border-radius:14px;padding:20px 24px;
+  position:relative;
+}
+.output-box.disp{
+  background:linear-gradient(135deg,#E65100,#BF360C);
+  border:1px solid #FF9800;
+  box-shadow:0 0 20px rgba(255,152,0,0.15);
+}
+.output-box.depth{
+  background:linear-gradient(135deg,#1B5E20,#003300);
+  border:1px solid #4CAF50;
+  box-shadow:0 0 20px rgba(76,175,80,0.15);
+}
+.output-box .label{
+  font-size:15px;font-weight:700;color:#FFFFFF;margin-bottom:8px;
+}
+.output-box .spec{
+  display:flex;gap:10px;flex-wrap:wrap;
+}
+.output-box .spec .tag{
+  font-size:12px;padding:3px 10px;border-radius:6px;
+  background:rgba(255,255,255,0.1);
+  border:1px solid rgba(255,255,255,0.2);color:#E0E0E0;
+}
+.output-arrow{
+  text-align:center;font-size:14px;color:#81C784;padding:4px 0;
+  position:relative;z-index:1;
+}
+.output-arrow span{
+  font-size:11px;color:#546E7A;display:block;
+}
+
+/* ===== Timeline (Gantt) ===== */
+.timeline-wrap{
+  position:relative;z-index:1;
+  margin:24px 20px 0 220px;
+  background:rgba(255,255,255,0.02);
+  border:1px solid rgba(255,255,255,0.06);border-radius:12px;
+  padding:16px 20px;
+}
+.timeline-wrap .tl-title{
+  font-size:14px;font-weight:700;color:#90A4AE;margin-bottom:12px;
+  display:flex;align-items:center;gap:8px;
+}
+.timeline-wrap .tl-title .tl-toggle{
+  font-size:11px;color:#546E7A;cursor:pointer;
+  padding:2px 8px;border-radius:4px;
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.08);
+  transition:background .2s;
+}
+.timeline-wrap .tl-title .tl-toggle:hover{background:rgba(255,255,255,0.1)}
+.timeline{
+  position:relative;
+}
+.timeline .tl-header{
+  display:flex;font-size:10px;color:#546E7A;
+  padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.06);
+  margin-bottom:4px;
+}
+.timeline .tl-header .tl-time{flex:1;text-align:center}
+.tl-row{
+  display:flex;align-items:center;padding:5px 0;
+  font-size:11px;color:#B0BEC5;font-weight:600;
+}
+.tl-row .tl-label{width:40px;flex-shrink:0;font-size:10px}
+.tl-row .tl-bar-wrap{flex:1;height:22px;position:relative;background:rgba(255,255,255,0.03);border-radius:4px;overflow:hidden}
+.tl-row .tl-bar{
+  position:absolute;top:1px;height:20px;border-radius:3px;
+  display:flex;align-items:center;padding:0 8px;
+  font-size:9px;color:#fff;font-weight:600;
+  transition:width .5s ease;
+}
+.tl-row .tl-bar.vic{background:linear-gradient(90deg,#1565C0,#2196F3);left:2%;width:20%}
+.tl-row .tl-bar.pva{background:linear-gradient(90deg,#7B1FA2,#9C27B0);left:22%;width:48%}
+.tl-row .tl-bar.dla0{background:linear-gradient(90deg,#E65100,#FF9800);left:0%;width:52%}
+.tl-row .tl-bar.dla1{background:linear-gradient(90deg,#E65100,#FF9800);left:0%;width:52%}
+.tl-row .tl-bar.gpu-idle{background:linear-gradient(90deg,#2E7D32,#4CAF50);left:0%;width:55%;opacity:0.35;color:#81C784}
+.tl-row .tl-bar.gpu-work{background:linear-gradient(90deg,#1B5E20,#4CAF50);left:55%;width:45%}
+.tl-fence{
+  position:absolute;top:0;bottom:0;width:2px;
+  background:#E040FB;z-index:3;
+}
+.tl-fence::after{
+  content:'fence';position:absolute;top:-14px;left:-10px;
+  font-size:8px;color:#E040FB;font-weight:600;
+}
+.tl-fence.f1{left:20%}.tl-fence.f2{left:72%}
+
+/* ===== Flow dots animation ===== */
+.flow-dots{
+  position:absolute;top:0;left:0;width:100%;height:100%;
+  pointer-events:none;overflow:hidden;z-index:2;
+}
+.flow-dot{
+  position:absolute;width:4px;height:4px;
+  background:#CE93D8;border-radius:50%;
+  box-shadow:0 0 6px #CE93D8;
+  animation:flow 3s linear infinite;
+}
+@keyframes flow{
+  0%{transform:translateX(-10px);opacity:0}
+  10%{opacity:1}
+  90%{opacity:1}
+  100%{transform:translateX(calc(100% + 10px));opacity:0}
+}
+
+/* ===== Tooltip ===== */
+.tooltip{
+  display:none;
+  position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);
+  width:220px;
+  background:#1A1A2E;border:1px solid #9C27B0;border-radius:8px;
+  padding:10px 12px;z-index:10;
+  box-shadow:0 4px 20px rgba(0,0,0,0.5);
+}
+.step:hover .tooltip{display:block}
+.tooltip .tt-title{
+  font-size:11px;font-weight:700;color:#E1BEE7;margin-bottom:4px;
+}
+.tooltip .tt-body{
+  font-size:10px;color:#B39DDB;line-height:1.4;
+}
+.tooltip .tt-formula{
+  font-size:9px;color:#7E57C2;font-family:monospace;
+  margin-top:4px;padding:4px 6px;
+  background:rgba(0,0,0,0.3);border-radius:4px;
+}
+
+/* ===== Responsive ===== */
+@media(max-width:1240px){
+  #canvas{width:100%;min-height:auto;padding:0 16px 20px}
+  .zero-copy{display:none}
+  .perf-card{position:static;width:100%;margin-top:16px}
+  .timeline-wrap{margin:16px 0}
+  .pipeline{flex-wrap:wrap}
+  .step{min-width:calc(33.33% - 8px)}
+  .step-arrow{display:none}
+}
+</style>
+</head>
+<body>
+<div id="canvas">
+  <canvas class="bg" id="bgCanvas"></canvas>
+
+  <!-- Flow dots -->
+  <div class="flow-dots" id="flowDots"></div>
+
+  <!-- Title -->
+  <div class="title">
+    <h1>⚡️ PVA v2 — 可编程视觉加速器 SGM 立体匹配</h1>
+    <p class="sub">~3ms · <span>亚像素精度</span> · 与 GPU 并行运行</p>
+  </div>
+
+  <!-- Layer 1: Input -->
+  <div class="layer-label">Input · 已校正 L/R 全图</div>
+  <div class="input-row">
+    <div class="input-box">
+      <div class="label">Left Rectified <span>(已校正左图)</span></div>
+      <div class="spec">
+        <span class="tag">640×480</span>
+        <span class="tag">U8</span>
+        <span class="tag">NVMM memory</span>
+      </div>
+      <div class="bottom-note">来自 VIC Remap 硬件矫正 · 极线对齐</div>
+    </div>
+    <div class="input-box">
+      <div class="label">Right Rectified <span>(已校正右图)</span></div>
+      <div class="spec">
+        <span class="tag">640×480</span>
+        <span class="tag">U8</span>
+        <span class="tag">NVMM memory</span>
+      </div>
+      <div class="bottom-note">来自 VIC Remap 硬件矫正 · 极线对齐</div>
+    </div>
+  </div>
+
+  <!-- Arrow down -->
+  <div class="input-arrow-left">▼</div>
+
+  <!-- Zero-Copy sidebar -->
+  <div class="zero-copy">
+    <div class="title-tag">🔄 零拷贝 (Zero-Copy) 数据流</div>
+    <div class="flow-line">
+      <div class="node">VIC Remap</div>
+      <div class="node">PVA SGM</div>
+      <div class="node">GPU 3D Recon</div>
+    </div>
+    <div class="check">
+      <span>✅ 全程 NVMM 无 CPU 介入</span>
+      <span>✅ NvBufSurface fence 同步</span>
+    </div>
+  </div>
+
+  <!-- Layer 2: PVA SGM Pipeline -->
+  <div class="layer-label">Core · PVA SGM 立体匹配流水线</div>
+  <div class="pva-box">
+    <div class="pva-title">
+      ⚡️ PVA 可编程视觉加速器 <span>Programmable Vision Accelerator v2</span>
+    </div>
+
+    <!-- Pipeline 6 steps -->
+    <div class="pipeline">
+      <div class="step">
+        <div class="step-num">STEP 1</div>
+        <div class="step-name">Census<br>Transform</div>
+        <div class="step-desc">5×5/7×7 邻域编码</div>
+        <div class="step-formula">C(p)=⊗ξ(I(p),I(q))</div>
+        <div class="tooltip">
+          <div class="tt-title">📐 Census Transform</div>
+          <div class="tt-body">对每个像素的 5×5 或 7×7 邻域做 Census 变换，生成局部结构描述子（bit string）</div>
+          <div class="tt-formula">C(p) = ⊗_{q∈N(p)} ξ(I(p), I(q))<br>ξ(x,y)=1 if x&lt;y else 0</div>
+        </div>
+      </div>
+      <div class="step-arrow">→</div>
+
+      <div class="step">
+        <div class="step-num">STEP 2</div>
+        <div class="step-name">Cost<br>Computation</div>
+        <div class="step-desc">Hamming Distance</div>
+        <div class="step-formula">Cost(d)=Hamming(Cₗ,Cᵣ(p-d))</div>
+        <div class="tooltip">
+          <div class="tt-title">📐 Cost Computation</div>
+          <div class="tt-body">计算左右图 Census 编码的 Hamming distance，搜索范围 d∈[0, maxDisparity)</div>
+          <div class="tt-formula">Cost(d) = Hamming(Cₓ(p), Cᵣ(p-d))</div>
+        </div>
+      </div>
+      <div class="step-arrow">→</div>
+
+      <div class="step highlight">
+        <div class="step-num">★ STEP 3 ★</div>
+        <div class="step-name">SGM<br>Aggregation</div>
+        <div class="step-desc">★ 核心 · 多方向DP ★</div>
+        <div class="step-formula">Lᵣ=Cost+min(Lᵣ...)+P₁</div>
+        <div class="tooltip">
+          <div class="tt-title">🔥 SGM Aggregation (核心)</div>
+          <div class="tt-body">沿 4 或 8 个方向聚合代价，Semi-Global Matching 核心——多方向动态规划</div>
+          <div class="tt-formula">P₁=8, P₂=32 (可调)<br>Lᵣ(p,d)=Cost(p,d) + min(Lᵣ(p-r,d), Lᵣ(p-r,d±1)+P₁, minₖ(Lᵣ(p-r,k))+P₂) - minₖ(Lᵣ(p-r,k))</div>
+        </div>
+      </div>
+      <div class="step-arrow">→</div>
+
+      <div class="step">
+        <div class="step-num">STEP 4</div>
+        <div class="step-name">Winner<br>Takes All</div>
+        <div class="step-desc">取最小代价视差</div>
+        <div class="step-formula">d*=argmin S(p,d)</div>
+        <div class="tooltip">
+          <div class="tt-title">📐 Winner-Takes-All</div>
+          <div class="tt-body">每个像素取最小聚合代价对应的视差，输出整像素精度视差图 S16</div>
+          <div class="tt-formula">d*(p) = argminₒ S(p,d)</div>
+        </div>
+      </div>
+      <div class="step-arrow">→</div>
+
+      <div class="step sub-highlight">
+        <div class="step-num">★ STEP 5 ★</div>
+        <div class="step-name">Sub-pixel<br>Interpolation</div>
+        <div class="step-desc">★ 1/8 像素精度 ★</div>
+        <div class="step-formula">抛物线拟合 ×8</div>
+        <div class="tooltip">
+          <div class="tt-title">🎯 Sub-pixel Interpolation</div>
+          <div class="tt-body">对 WTA 结果做抛物线/等角拟合，达到 1/8 像素亚像素精度。×8 定点：value/8 = 实际像素</div>
+          <div class="tt-formula">d_sub = d* + (C(d*-1)-C(d*+1)) / (2·(C(d*-1)-2·C(d*)+C(d*+1)))</div>
+        </div>
+      </div>
+      <div class="step-arrow">→</div>
+
+      <div class="step">
+        <div class="step-num">STEP 6</div>
+        <div class="step-name">L-R<br>Consistency</div>
+        <div class="step-desc">遮挡过滤 ≤1px</div>
+        <div class="step-formula">|dₗ-dᵣ|≤1</div>
+        <div class="tooltip">
+          <div class="tt-title">📐 L-R Consistency Check</div>
+          <div class="tt-body">左右一致性检查，标记遮挡点。阈值 |dₓ-dᵣ| ≤ 1 pixel，无效点标记为 0</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Median Filter -->
+    <div class="median-bar">
+      <span class="m-title">▣ Median Filter</span>
+      <span class="m-desc">3×3 中值滤波去噪（可选 5×5）</span>
+    </div>
+  </div>
+
+  <!-- Arrow down -->
+  <div class="input-arrow-left">▼</div>
+
+  <!-- Layer 3: Output -->
+  <div class="layer-label">Output · 视差图 → 深度图</div>
+  <div class="output-row">
+    <div class="output-box disp">
+      <div class="label">Disparity Map <span style="font-size:12px;font-weight:400;color:rgba(255,255,255,0.6)">视差图</span></div>
+      <div class="spec">
+        <span class="tag">S16 · ×8 亚像素</span>
+        <span class="tag">640×480</span>
+        <span class="tag">NVMM memory</span>
+      </div>
+    </div>
+    <div class="output-box depth">
+      <div class="label">Depth Map <span style="font-size:12px;font-weight:400;color:rgba(255,255,255,0.6)">深度图</span></div>
+      <div class="spec">
+        <span class="tag">F32 · meters</span>
+        <span class="tag">640×480</span>
+        <span class="tag">NVMM memory</span>
+      </div>
+    </div>
+  </div>
+  <div class="output-arrow">
+    → <span>depth = f·b / d</span>
+  </div>
+
+  <!-- Performance Card -->
+  <div class="perf-card">
+    <div class="perf-title">⚡️ PVA SGM 性能</div>
+    <table>
+      <tr><td>分辨率</td><td>640×480</td></tr>
+      <tr><td>延迟</td><td>~3-5ms</td></tr>
+      <tr><td>功耗</td><td>0.5-1W</td></tr>
+      <tr><td>亚像素</td><td>×8 (1/8 px)</td></tr>
+      <tr><td>最大视差</td><td>64 (可调至 128)</td></tr>
+      <tr><td>GPU 占用</td><td>❌ 不占用</td></tr>
+    </table>
+  </div>
+
+  <!-- Parallel Timeline -->
+  <div class="timeline-wrap">
+    <div class="tl-title">
+      ⏱ 并行时间轴 (Gantt)
+      <span class="tl-toggle" onclick="toggleTimeline()">折叠</span>
+    </div>
+    <div class="timeline" id="timeline">
+      <div class="tl-header">
+        <span style="width:40px;flex-shrink:0"></span>
+        <span class="tl-time">t0</span>
+        <span class="tl-time">t+1ms</span>
+        <span class="tl-time">t+3ms</span>
+        <span class="tl-time">t+5ms</span>
+        <span class="tl-time">t+8ms</span>
+      </div>
+      <div class="tl-row">
+        <span class="tl-label" style="color:#2196F3">VIC</span>
+        <div class="tl-bar-wrap">
+          <div class="tl-bar vic">Remap 2%</div>
+        </div>
+      </div>
+      <div class="tl-row">
+        <span class="tl-label" style="color:#9C27B0">PVA</span>
+        <div class="tl-bar-wrap">
+          <div class="tl-bar pva">SGM Stereo 22%</div>
+        </div>
+      </div>
+      <div class="tl-row">
+        <span class="tl-label" style="color:#FF9800">DLA-0</span>
+        <div class="tl-bar-wrap">
+          <div class="tl-bar dla0">YOLO 26n Left 0%</div>
+        </div>
+      </div>
+      <div class="tl-row">
+        <span class="tl-label" style="color:#FF9800">DLA-1</span>
+        <div class="tl-bar-wrap">
+          <div class="tl-bar dla1">YOLO 26n Right 0%</div>
+        </div>
+      </div>
+      <div class="tl-row">
+        <span class="tl-label" style="color:#4CAF50">GPU</span>
+        <div class="tl-bar-wrap">
+          <div class="tl-bar gpu-idle">Idle (wait fence)</div>
+          <div class="tl-bar gpu-work">ViTPose + SMPL 55%</div>
+        </div>
+      </div>
+      <!-- Fence markers -->
+      <div class="tl-fence f1"></div>
+      <div class="tl-fence f2"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// Particle background
+const canvas = document.getElementById('bgCanvas');
+const ctx = canvas.getContext('2d');
+function resize(){
+  const rect = document.getElementById('canvas').getBoundingClientRect();
+  canvas.width = rect.width;
+  canvas.height = rect.height;
+}
+resize();
+window.addEventListener('resize', resize);
+
+const particles = [];
+for(let i=0;i<60;i++){
+  particles.push({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    vx: (Math.random()-0.5)*0.3,
+    vy: (Math.random()-0.5)*0.3,
+    r: Math.random()*1.5+0.5,
+    a: Math.random()*0.3+0.1
+  });
+}
+function animate(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  for(const p of particles){
+    p.x += p.vx;
+    p.y += p.vy;
+    if(p.x<0) p.x=canvas.width;
+    if(p.x>canvas.width) p.x=0;
+    if(p.y<0) p.y=canvas.height;
+    if(p.y>canvas.height) p.y=0;
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    ctx.fillStyle=`rgba(206,147,216,${p.a})`;
+    ctx.fill();
+  }
+  requestAnimationFrame(animate);
+}
+animate();
+
+// Flow dots in pipeline
+const flowDots = document.getElementById('flowDots');
+const pvaBox = document.querySelector('.pva-box');
+const pvaRect = pvaBox.getBoundingClientRect();
+const canvasRect = document.getElementById('canvas').getBoundingClientRect();
+
+// Create flowing dots
+for(let i=0;i<8;i++){
+  const dot = document.createElement('div');
+  dot.className = 'flow-dot';
+  dot.style.top = (20 + Math.random() * 40) + '%';
+  dot.style.animationDelay = (i * 0.4) + 's';
+  dot.style.animationDuration = (2.5 + Math.random()) + 's';
+  flowDots.appendChild(dot);
+}
+
+// Tooltip reposition on edge
+document.querySelectorAll('.step').forEach(step => {
+  const tt = step.querySelector('.tooltip');
+  if(!tt) return;
+  step.addEventListener('mouseenter', () => {
+    const r = tt.getBoundingClientRect();
+    if(r.left < 0) tt.style.transform = 'translateX(0)';
+    if(r.right > window.innerWidth) tt.style.transform = 'translateX(-100%)';
+  });
+});
+
+// Timeline toggle
+function toggleTimeline(){
+  const tl = document.getElementById('timeline');
+  const btn = document.querySelector('.tl-toggle');
+  if(tl.style.display === 'none'){
+    tl.style.display = 'block';
+    btn.textContent = '折叠';
+  } else {
+    tl.style.display = 'none';
+    btn.textContent = '展开';
+  }
+}
+</script>
+</body>
+</html>
