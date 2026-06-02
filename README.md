@@ -44,3 +44,4 @@ MIT © RunCao
 
 > 📐 [**PVA-SGM 立体匹配流程**](https://runcao.github.io/MotionLabs/pva-sgm-detail.html) — 双目立体匹配完整流程可视化
 > 📐 [**motionlabs-ddd**](https://runcao.github.io/MotionLabs/motionlabs-ddd.html) — DDD 设计可视化
+> 📐 [**VPI DataPath 流水线**](https://runcao.github.io/MotionLabs/vpi-datapath.html) — VPI 数据通路架构图
