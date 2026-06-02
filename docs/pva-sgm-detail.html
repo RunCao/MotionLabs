@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>PVA SGM · 工程参考 · MotionLabs</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0D1117;color:#E6EDF3;display:flex;justify-content:center;padding:28px 12px 60px;font-family:'SF Pro Display',-apple-system,'PingFang SC','Microsoft YaHei',sans-serif}
+#wrap{width:1100px;max-width:100%}
+h1{font-size:28px;font-weight:800;color:#E1BEE7;text-align:center;margin-bottom:4px}
+.sub{text-align:center;font-size:13px;color:#78909C;margin-bottom:32px}
+.section-label{font-size:11px;font-weight:700;color:#58a6ff;letter-spacing:1px;margin:36px 0 12px;padding-left:10px;border-left:3px solid #7B1FA2}
+
+/* Card */
+.card{border-radius:12px;padding:18px 22px;margin-bottom:12px;background:#161b22;border:1px solid #30363d;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%}
+.card.def::before{background:#9C27B0}
+.card.core::before{background:#E040FB}
+.card.subp::before{background:#FFD54F}
+.card.io::before{background:#4FC3F7}
+.card.out::before{background:#4CAF50}
+.card.usage::before{background:#58a6ff}
+.card .head{display:flex;align-items:baseline;gap:10px;margin-bottom:6px}
+.card .badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;flex-shrink:0;font-family:'SF Mono',monospace}
+.card.def .badge{background:rgba(156,39,176,.15);color:#CE93D8}
+.card.core .badge{background:rgba(224,64,251,.15);color:#E040FB}
+.card.subp .badge{background:rgba(255,213,79,.15);color:#FFD54F}
+.card.io .badge{background:rgba(79,195,247,.15);color:#79c0ff}
+.card.out .badge{background:rgba(76,175,80,.15);color:#81C784}
+.card.usage .badge{background:rgba(88,166,255,.15);color:#79c0ff}
+.card .name{font-size:14px;font-weight:700;color:#E6EDF3}
+.card.core .name{color:#E040FB}
+.card.subp .name{color:#FFD54F}
+.card .meta{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 8px}
+.chip{font-size:9px;padding:2px 8px;border-radius:4px;font-family:'SF Mono',monospace}
+.chip.hw{background:rgba(79,195,247,.1);color:#79c0ff}
+.chip.fmt{background:rgba(86,211,100,.1);color:#7ee787}
+.chip.perf{background:rgba(255,152,0,.1);color:#ffa657}
+.chip.param{background:#21262d;color:#8b949e}
+.card .spec-table{width:100%;font-size:10px;border-collapse:collapse;margin-top:6px}
+.card .spec-table td{padding:3px 8px 3px 0;vertical-align:top;line-height:1.5}
+.card .spec-table .k{color:#8b949e;white-space:nowrap;width:80px;font-family:'SF Mono',monospace}
+.card .spec-table .v{color:#c9d1d9}
+.card .spec-table .v code{background:#21262d;padding:1px 5px;border-radius:3px;font-size:9px;color:#c9d1d9}
+.conn{text-align:center;font-size:10px;color:#484f58;padding:4px 0 4px 14px}
+.conn .arrow{color:#30363d;font-size:14px;display:block}
+.conn .fmt{color:#7ee787;font-family:'SF Mono',monospace;font-size:9px}
+
+/* Flow diagram */
+.flow-box{border-radius:14px;padding:24px 20px;margin:16px 0;background:linear-gradient(135deg,rgba(22,27,34,.7),rgba(13,17,35,.8));border:1px solid #30363d}
+.flow-box .f-title{font-size:13px;font-weight:700;color:#90CAF9;margin-bottom:18px;text-align:center}
+.flow-row{display:flex;align-items:stretch;gap:0;justify-content:center;flex-wrap:wrap}
+.flow-node{text-align:center;padding:14px 16px;border-radius:10px;min-width:100px;border:1px solid;font-size:9px}
+.flow-node.inp{background:rgba(21,101,192,.15);border-color:#2196F3;color:#90CAF9}
+.flow-node.pva{background:rgba(123,31,162,.15);border-color:#9C27B0;color:#CE93D8}
+.flow-node.gpu{background:rgba(27,94,32,.15);border-color:#4CAF50;color:#81C784}
+.flow-node.cpu{background:rgba(56,189,248,.08);border-color:#38bdf8;color:#7dd3fc}
+.flow-node.out{background:rgba(255,152,0,.12);border-color:#FF9800;color:#ffa657}
+.flow-node .n-label{font-weight:700;font-size:11px;margin-bottom:3px}
+.flow-node .n-desc{font-size:8px;opacity:.7;line-height:1.4}
+.flow-arrow{display:flex;align-items:center;color:#484f58;font-size:18px;padding:0 4px;flex-shrink:0}
+.flow-arrow.down{flex-direction:column;font-size:12px}
+.flow-merge{display:flex;flex-direction:column;align-items:center;gap:4px}
+
+/* Two paths comparison */
+.path-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+.path-card{border-radius:10px;padding:16px 18px;border:1px solid #30363d;background:#161b22}
+.path-card.bad{border-color:rgba(255,70,70,.2)}
+.path-card.good{border-color:rgba(86,211,100,.2)}
+.path-card .p-head{font-size:13px;font-weight:700;margin-bottom:10px}
+.path-card.bad .p-head{color:#ff7b72}
+.path-card.good .p-head{color:#7ee787}
+.path-card .p-item{font-size:10px;color:#8b949e;padding:3px 0;line-height:1.5}
+.path-card .p-item code{background:#21262d;padding:1px 5px;border-radius:3px;font-size:9px}
+.path-card .p-cost{font-size:10px;color:#484f58;margin-top:8px;padding-top:8px;border-top:1px solid #21262d}
+
+/* Code explainer */
+.code-ex{background:#0d1117;border:1px solid #30363d;border-radius:10px;padding:14px 18px;margin:12px 0;overflow-x:auto}
+.code-ex pre{font-family:'SF Mono',monospace;font-size:10px;line-height:1.8;color:#c9d1d9}
+.code-ex .kw{color:#ff7b72}.code-ex .fn{color:#d2a8ff}.code-ex .cm{color:#484f58}.code-ex .num{color:#79c0ff}
+
+.usage-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.u-card{border-radius:10px;padding:16px 18px;background:#161b22;border:1px solid #30363d}
+.u-card .u-icon{font-size:18px;margin-right:6px}
+.u-card .u-title{font-size:12px;font-weight:700;color:#e6edf3;margin-bottom:6px}
+.u-card .u-body{font-size:10px;color:#8b949e;line-height:1.6}
+.u-card .u-body code{background:#21262d;padding:1px 4px;border-radius:3px;font-size:9px}
+
+.io-row{display:flex;gap:12px}.io-row .card{flex:1}
+@media(max-width:768px){.path-grid,.usage-grid,.io-row{grid-template-columns:1fr}.flow-row{flex-direction:column;align-items:center}}
+</style>
+</head>
+<body>
+<div id="wrap">
+
+<h1>PVA SGM · 视差图怎么用？</h1>
+<div class="sub">视差图 = 全画面深度查找表 · ViTPose++ 关节坐标 (u,v) 查表得 Z → 3D</div>
+
+<!-- ═══════════ KEY INSIGHT ═══════════ -->
+<div class="section-label">关键认知：视差图和 ViTPose++ 的分工</div>
+
+<div class="path-grid">
+  <div class="path-card bad">
+    <div class="p-head">❌ 路径 A · 经典双目匹配（不采用）</div>
+    <div class="p-item">左图 → ViTPose++ → 左 33 点 (u₁,v₁)</div>
+    <div class="p-item">右图 → <b>再跑一次</b> ViTPose++ → 右 33 点 (u₂,v₂)</div>
+    <div class="p-item">手动匹配 33 对关键点 → 逐对求视差 → 三角化</div>
+    <div class="p-cost">成本：ViTPose++ ×2 (50ms) + 匹配开销 · <b>太慢</b></div>
+  </div>
+  <div class="path-card good">
+    <div class="p-head">✅ 路径 B · 视差图查表（MotionLabs 实际走法）</div>
+    <div class="p-item">左图 → ViTPose++ → 左 33 点 (u,v) <b>一次</b></div>
+    <div class="p-item">双目 → PVA SGM → <b>全画面视差图</b> (每个像素都有深度)</div>
+    <div class="p-item">对每个关节: <code>disp = disparity_map[v,u]</code> · 查表 <b>O(1)</b></div>
+    <div class="p-item"><code>Z = B×f / disp · X = (u-cx)×Z/f · Y = (v-cy)×Z/f</code></div>
+    <div class="p-cost">成本：ViTPose++ (25ms) + PVA SGM (12ms 并行) · <b>总瓶颈仍是 GPU 25ms</b></div>
+  </div>
+</div>
+
+<!-- ═══════════ DATA FLOW ═══════════ -->
+<div class="section-label">数据流：三个输入 → 一个输出</div>
+
+<div class="flow-box">
+  <div class="f-title">MotionLabs 3D 姿态估计实际数据流</div>
+
+  <!-- Row 1: inputs -->
+  <div class="flow-row" style="margin-bottom:8px">
+    <div class="flow-node inp">
+      <div class="n-label">双目图像</div>
+      <div class="n-desc">UVC SBS<br>1280×720 NV12</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node inp">
+      <div class="n-label">VIC Remap</div>
+      <div class="n-desc">畸变矫正<br>极线对齐</div>
+    </div>
+  </div>
+  <div class="flow-arrow down" style="padding:6px 0">↓ 分两路并行 ↓</div>
+
+  <!-- Row 2: two parallel paths -->
+  <div class="flow-row">
+    <div class="flow-node pva" style="min-width:200px">
+      <div class="n-label">PVA SGM 视差匹配</div>
+      <div class="n-desc">双目左+右 → Census+Hamming+DP<br>输出: 1280×720 视差图 U16<br>每个像素 → 深度 Z 可查</div>
+    </div>
+    <div class="flow-arrow">∥</div>
+    <div class="flow-node gpu" style="min-width:200px">
+      <div class="n-label">DLA+GPU AI 推理</div>
+      <div class="n-desc">DLA: YOLOv6-N 人体检测<br>GPU: ViTPose++ 左图 2D 关键点<br>输出: 33 个关节 (u,v) 像素坐标</div>
+    </div>
+  </div>
+
+  <div class="flow-arrow down" style="padding:6px 0">↓ 两路汇聚到 CPU ↓</div>
+
+  <!-- Row 3: merge -->
+  <div class="flow-row" style="margin-bottom:8px">
+    <div class="flow-node cpu" style="min-width:420px">
+      <div class="n-label">CPU 三角化：查表 + 计算</div>
+      <div class="n-desc" style="text-align:left">
+        <b>for</b> 每个关节 (u, v) <b>in</b> ViTPose++ 输出:<br>
+        &nbsp;&nbsp;disp = <b>视差图</b>[v, u] &nbsp;&nbsp;&nbsp;<span style="color:#484f58">← 查表，O(1)</span><br>
+        &nbsp;&nbsp;Z = B_mm × f_px / (disp / 8.0)<br>
+        &nbsp;&nbsp;X = (u − cx) × Z / f_px<br>
+        &nbsp;&nbsp;Y = (v − cy) × Z / f_px<br>
+        → 33 个 3D 关键点 (X,Y,Z) mm
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-arrow down" style="padding:6px 0">↓</div>
+
+  <div class="flow-row">
+    <div class="flow-node out">
+      <div class="n-label">3D 骨骼输出</div>
+      <div class="n-desc">33 关节 × (X,Y,Z) mm<br>→ 动作分析 / OpenSim / 反馈</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ CODE ═══════════ -->
+<div class="section-label">伪代码：视差图怎么被消费</div>
+<div class="code-ex"><pre>
+<span class="cm"># === PVA 端 (并行于 GPU) ===</span>
+disparity_map = pva_sgm.process(left_img, right_img)  <span class="cm"># U16, 1280×720, ×8亚像素</span>
+
+<span class="cm"># === GPU 端 (并行于 PVA) ===</span>
+keypoints_2d = vitpose.infer(left_img)  <span class="cm"># [(u₁,v₁,conf₁), ..., (u₃₃,v₃₃,conf₃₃)]</span>
+
+<span class="cm"># === CPU 端 (两路都完成后) ===</span>
+keypoints_3d = []
+<span class="kw">for</span> kp <span class="kw">in</span> keypoints_2d:
+    u, v = <span class="fn">int</span>(kp.u), <span class="fn">int</span>(kp.v)
+    disp_raw = disparity_map[v, u]          <span class="cm"># ← 查表! 关键是这一行</span>
+    <span class="kw">if</span> disp_raw == <span class="num">-1</span> <span class="kw">or</span> disp_raw == <span class="num">0</span>:          <span class="cm"># 无效 (遮挡/低置信)</span>
+        <span class="kw">continue</span>
+    disp_px = disp_raw / <span class="num">8.0</span>                 <span class="cm"># 亚像素→真实像素</span>
+    Z = baseline_mm * focal_px / disp_px    <span class="cm"># 深度 mm</span>
+    X = (u - cx) * Z / focal_px             <span class="cm"># 世界坐标 X</span>
+    Y = (v - cy) * Z / focal_px             <span class="cm"># 世界坐标 Y</span>
+    keypoints_3d.append((X, Y, Z))
+</pre></div>
+
+<!-- ═══════════ SUMMARY TABLE ═══════════ -->
+<div class="section-label">三者关系总结</div>
+<table style="width:100%;font-size:10px;border-collapse:collapse;margin-bottom:8px">
+<thead>
+<tr><th style="text-align:left;padding:4px 8px;color:#8b949e;border-bottom:1px solid #21262d">数据</th><th style="text-align:left;padding:4px 8px;color:#8b949e;border-bottom:1px solid #21262d">生产者</th><th style="text-align:left;padding:4px 8px;color:#8b949e;border-bottom:1px solid #21262d">格式</th><th style="text-align:left;padding:4px 8px;color:#8b949e;border-bottom:1px solid #21262d">内容</th><th style="text-align:left;padding:4px 8px;color:#8b949e;border-bottom:1px solid #21262d">角色</th></tr>
+</thead>
+<tbody>
+<tr><td style="padding:3px 8px;color:#CE93D8">视差图</td><td style="padding:3px 8px">PVA SGM</td><td style="padding:3px 8px"><code>1280×720 U16</code></td><td style="padding:3px 8px">每个像素的视差值 (±8)</td><td style="padding:3px 8px;color:#7ee787"><b>深度查找表</b> — 全画面</td></tr>
+<tr><td style="padding:3px 8px;color:#81C784">2D 关键点</td><td style="padding:3px 8px">GPU ViTPose++</td><td style="padding:3px 8px"><code>33×(u,v,conf)</code></td><td style="padding:3px 8px">关节在左图的像素坐标</td><td style="padding:3px 8px;color:#7ee787"><b>空间索引</b> — 告诉你去哪里查</td></tr>
+<tr style="border-top:1px solid #30363d"><td style="padding:3px 8px;color:#ffa657">3D 关键点</td><td style="padding:3px 8px">CPU 三角化</td><td style="padding:3px 8px"><code>33×(X,Y,Z) mm</code></td><td style="padding:3px 8px">世界坐标系关节位置</td><td style="padding:3px 8px;color:#7ee787"><b>最终输出</b> — 下游消费</td></tr>
+</tbody>
+</table>
+
+<div style="font-size:11px;color:#8b949e;text-align:center;margin:10px 0 4px;line-height:1.6">
+<b>视差图</b> 提供全画面深度 · <b>ViTPose++ 2D</b> 提供关节位置 · 两者结合 → <b>3D 骨骼</b><br>
+本质 = "AI 告诉你关节在哪 (u,v)，SGM 告诉你那个位置有多深 (Z)"
+</div>
+
+<!-- ═══════════ SGM STEPS ═══════════ -->
+<div class="section-label">SGM 六步流水线</div>
+
+<div class="io-row">
+  <div class="card io"><div class="head"><span class="badge">IN</span><span class="name">左目 Left</span></div><table class="spec-table"><tr><td class="k">来源</td><td class="v">VIC Remap 矫正后 NV12 buffer</td></tr><tr><td class="k">格式</td><td class="v"><code>U8</code> 灰度</td></tr><tr><td class="k">大小</td><td class="v"><code>1280×720</code> ≈ 900KB</td></tr><tr><td class="k">传输</td><td class="v">PVA DMA 零拷贝</td></tr></table></div>
+  <div class="card io"><div class="head"><span class="badge">IN</span><span class="name">右目 Right</span></div><table class="spec-table"><tr><td class="k">来源</td><td class="v">同左目 · 共享 NV12 buffer</td></tr><tr><td class="k">格式</td><td class="v"><code>U8</code> 灰度</td></tr><tr><td class="k">前置</td><td class="v">已极线对齐</td></tr></table></div>
+</div>
+
+<div class="conn"><span class="arrow">↓</span><span class="fmt">NV12 → PVA DMA</span></div>
+
+<div class="card def"><div class="head"><span class="badge">1</span><span class="name">Census Transform</span></div><div class="meta"><span class="chip hw">PVA</span><span class="chip fmt">U8 → U32</span><span class="chip perf">1.2ms</span><span class="chip param">window=5</span></div><table class="spec-table"><tr><td class="k">处理</td><td class="v">5×5 邻域比较 → 24-bit 位向量，PVA 向量单元并行</td></tr><tr><td class="k">输出</td><td class="v"><code>1280×720 U32</code> Census Bit-Vector × 2 ≈ 7MB</td></tr></table></div>
+<div class="conn"><span class="arrow">↓</span><span class="fmt">Census Bit-Vector (U32)</span></div>
+
+<div class="card def"><div class="head"><span class="badge">2</span><span class="name">Cost Computation</span></div><div class="meta"><span class="chip hw">PVA/OFA</span><span class="chip fmt">U32×2 → U16×D</span><span class="chip perf">1.5ms</span><span class="chip param">D=256</span></div><table class="spec-table"><tr><td class="k">处理</td><td class="v">沿极线搜索 256 位置，XOR+POPCNT 汉明距离</td></tr><tr><td class="k">输出</td><td class="v"><code>1280×720×256 U16</code> Cost Volume · 峰值 ≈ 450MB (tile化)</td></tr></table></div>
+<div class="conn"><span class="arrow">↓</span><span class="fmt">Cost Volume (U16, W×H×Dmax)</span></div>
+
+<div class="card core"><div class="head"><span class="badge">★ 3</span><span class="name">SGM Aggregation</span></div><div class="meta"><span class="chip hw">PVA</span><span class="chip fmt">U16 → U16</span><span class="chip perf">6.5ms</span><span class="chip param">P₁=3 P₂=48</span></div><table class="spec-table"><tr><td class="k">处理</td><td class="v">8 方向 DP 聚合 · P₁ 小跳变惩罚(斜面) · P₂ 大跳变惩罚(边缘) · 3 轮迭代</td></tr></table></div>
+<div class="conn"><span class="arrow">↓</span><span class="fmt">Aggregated Cost</span></div>
+
+<div class="card def"><div class="head"><span class="badge">4</span><span class="name">Winner Takes All</span></div><div class="meta"><span class="chip hw">PVA</span><span class="chip fmt">U16×D → S16</span><span class="chip perf">0.8ms</span></div><table class="spec-table"><tr><td class="k">处理</td><td class="v">argmin 每像素 256 个候选 → 整数视差</td></tr><tr><td class="k">输出</td><td class="v"><code>1280×720 S16</code> ≈ 1.76MB</td></tr></table></div>
+<div class="conn"><span class="arrow">↓</span><span class="fmt">Integer Disparity (S16)</span></div>
+
+<div class="card subp"><div class="head"><span class="badge">★ 5</span><span class="name">Sub-pixel Interpolation</span></div><div class="meta"><span class="chip hw">PVA</span><span class="chip fmt">S16 → U16×8</span><span class="chip perf">0.6ms</span></div><table class="spec-table"><tr><td class="k">处理</td><td class="v">抛物线拟合 3 点 → 1/8 像素精度</td></tr><tr><td class="k">输出</td><td class="v"><code>1280×720 U16</code> (值/8=实际像素)</td></tr></table></div>
+<div class="conn"><span class="arrow">↓</span><span class="fmt">Sub-pixel Disparity (U16, ×8)</span></div>
+
+<div class="card def"><div class="head"><span class="badge">6</span><span class="name">L-R Consistency Check</span></div><div class="meta"><span class="chip hw">PVA</span><span class="chip perf">0.4ms</span></div><table class="spec-table"><tr><td class="k">处理</td><td class="v">R→L 交叉验证 · |dL−dR|≤1px 有效 · 否则标记 -1</td></tr></table></div>
+<div class="conn"><span class="arrow">↓</span></div>
+
+<div class="card def"><div class="head"><span class="badge">P</span><span class="name">Median Filter 5×5</span></div><div class="meta"><span class="chip hw">PVA</span><span class="chip perf">0.8ms</span></div><table class="spec-table"><tr><td class="k">处理</td><td class="v">去椒盐噪声 · 填充遮挡空洞</td></tr><tr><td class="k">输出</td><td class="v"><code>1280×720 U16</code> 最终视差图</td></tr></table></div>
+
+<div class="section-label">输出</div>
+<div class="io-row">
+  <div class="card out"><div class="head"><span class="badge">OUT</span><span class="name">视差图 S16/U16</span></div><table class="spec-table"><tr><td class="k">大小</td><td class="v"><code>1280×720</code> ≈ 1.76MB</td></tr><tr><td class="k">用途</td><td class="v">查表得深度 Z</td></tr></table></div>
+  <div class="card out"><div class="head"><span class="badge">OUT</span><span class="name">置信度 U16</span></div><table class="spec-table"><tr><td class="k">含义</td><td class="v">0~65535 匹配置信度</td></tr><tr><td class="k">用途</td><td class="v">过滤低置信区域</td></tr></table></div>
+</div>
+
+<div class="section-label">视差图下游消费</div>
+<div class="usage-grid">
+  <div class="u-card"><div class="u-title"><span class="u-icon">📐</span>深度换算</div><div class="u-body"><code>Z_mm = B_mm × f_px / (disp / 8.0)</code><br>基线 B × 焦距 f 为相机标定参数</div></div>
+  <div class="u-card"><div class="u-title"><span class="u-icon">🔺</span>3D 三角化</div><div class="u-body"><code>X = (u−cx)×Z/f &nbsp; Y = (v−cy)×Z/f</code><br>33 关节 → 33 个 (X,Y,Z) 世界坐标</div></div>
+  <div class="u-card"><div class="u-title"><span class="u-icon">🏃</span>动作分析</div><div class="u-body">3D 序列 → 关节角度/角速度/ROM<br>动作识别 · 偏差检测</div></div>
+  <div class="u-card"><div class="u-title"><span class="u-icon">📊</span>OpenSim</div><div class="u-body">3D 关键点 → .mot / .trc<br>逆向运动学 IK · 评分卡</div></div>
+</div>
+
+<div style="text-align:center;margin-top:32px;font-size:10px;color:#30363d"><a href="https://docs.nvidia.com/vpi/4.0/sample_stereo.html" style="color:#58a6ff">NVIDIA VPI 4.0</a> · MotionLabs</div>
+</div>
+</body>
+</html>
