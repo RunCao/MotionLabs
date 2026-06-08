@@ -40,8 +40,8 @@ MotionLabs 致力于通过开源软硬件和智能化算法，帮助用户科学
 - 📐 [**UVC SBS 双目硬件流水线架构图**](https://runcao.github.io/MotionLabs/uvc-sbs-architecture.html) — Jetson Orin NX 16GB 8 层零拷贝流水线设计
 - 📐 [**PVA-SGM 立体匹配流程**](https://runcao.github.io/MotionLabs/pva-sgm-detail.html) — 双目立体匹配完整流程可视化
 - 📐 [**motionlabs-ddd**](https://runcao.github.io/MotionLabs/motionlabs-ddd.html) — DDD 设计可视化
-|- 🔄 [**VPI 芯片 DDR 数据转移验证图**](https://runcao.github.io/MotionLabs/vpi-verify.html) — VPI · 芯片 · DDR · 数据转移架构验证
-|- 🧮 [**姿态估计模型量化校准技术报告 v2**](https://runcao.github.io/MotionLabs/姿态估计模型量化校准技术报告_v2.html) — 模型量化校准技术报告
+- 🔄 [**VPI 芯片 DDR 数据转移验证图**](https://runcao.github.io/MotionLabs/vpi-verify.html) — VPI · 芯片 · DDR · 数据转移架构验证
+- 🧮 [**姿态估计模型量化校准技术报告 v2**](https://runcao.github.io/MotionLabs/姿态估计模型量化校准技术报告_v2.html) — 模型量化校准技术报告
 
 
 ## 🪪 License
